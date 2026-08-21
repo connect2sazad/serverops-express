@@ -1,13 +1,9 @@
-import app from 'app.js'
-import { PORT } from './config/config';
+import { PORT } from "./config/config.js";
+import app from "./entry.js";
 
 
-const app = exp();
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-
-app.listen(PORT, () => {
-    console.log(`Port running at ${PORT}`)
-})
+export default server;
