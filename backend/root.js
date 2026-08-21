@@ -3,8 +3,8 @@ import express from "express";
 import { API_PREFIX } from "./config/config.js";
 
 // import all routers
-import healthRouter from './routes/health.js'
-import usersRouter from './routes/users.js';
+import healthRouter from './routes/health.route.js'
+import usersRouter from './routes/users.route.js';
 
 const router = express.Router();
 

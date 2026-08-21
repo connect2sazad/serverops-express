@@ -9,18 +9,19 @@ export const PROJECT_TITLE = process.env.PROJECT_TITLE || 'ServerOps';
 export const PROJECT_VERSION = process.env.PROJECT_VERSION || 'v1.0.0';
 export const API_DOCS_ENABLE = Boolean(process.env.API_DOCS_ENABLE || 'false');
 export const ENVIRONMENT = process.env.ENVIRONMENT || 'production';
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 export const PORT = Number(getRequiredEnv('PORT'));
 export const JWT_SECRET_KEY = getRequiredEnv('JWT_SECRET_KEY');
 export const DB_HOST = getRequiredEnv('DB_HOST');
+export const DB_PORT = process.env.DB_PORT || '3306';
+export const DB_DIALECT = process.env.DB_DIALECT || 'mysql';
 export const DB_NAME = getRequiredEnv('DB_NAME');
 export const DB_USER = getRequiredEnv('DB_USER');
-export const DB_PASS = getRequiredEnv('DB_PASS', true);
+export const DB_PASSWORD = getRequiredEnv('DB_PASSWORD', true);
 export const API_PREFIX = getRequiredEnv('API_PREFIX', true);
 export const ALLOWED_ORIGINS = getRequiredEnv('ALLOWED_ORIGINS', true);
 
 export const NODE_MIN_REQUIRED_VERSION = process.env.NODE_MIN_REQUIRED_VERSION || '22.0.0';
-
-console.log((process.version).replace('v', ''));
 
 // check node version before starting the app
 const currentNodeVersion = process.versions.node;
