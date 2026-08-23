@@ -1,11 +1,11 @@
-import { email, z } from 'zod';
+import { z } from 'zod';
 
 // login
 export const loginSchema = z.object({
 
-    email: z.email(),
+    userid: z.string(3, 'Userid is required'),
 
-    password: z.string().min(6),
+    password: z.string().min(6, 'Password is required'),
 
 });
 

@@ -3,9 +3,11 @@ import bcrypt from "bcryptjs";
 import AppException from "../exceptions/exception.js";
 import HTTP_STATUS from "../exceptions/status_codes.js";
 import User from "../models/user.model.js";
-import { UserCreateSchema } from "../schemas/user.schema.js";
+import { UserCreateSchema, UserSchema } from "../schemas/user.schema.js";
+import { loginSchema } from "../schemas/auth.schema.js";
+import { generate } from "../middlewares/auth.middleware.js";
 
-export class AuthController{
+export class AuthController {
 
     async register(req, res, next) {
 
@@ -31,14 +33,14 @@ export class AuthController{
                 }
             });
 
-            if(existingEmailUser){
+            if (existingEmailUser) {
                 throw new AppException(
                     'Email already exists!',
                     HTTP_STATUS.HTTP_409_CONFLICT
                 );
             }
 
-            if(existingUseridUser){
+            if (existingUseridUser) {
                 throw new AppException(
                     'Userid already exists!',
                     HTTP_STATUS.HTTP_409_CONFLICT
@@ -68,47 +70,69 @@ export class AuthController{
 
     }
 
-    async login(req, res, next){
-        
-        const {
-            userid,
-            password
-        } = req.body;
+    async login(req, res, next) {
 
-        if(!userid || !password){
-            throw new AppException(
-                'Userid and Password are required to login.',
-                HTTP_STATUS.HTTP_400_BAD_REQUEST
-            )
-        }
+        try {
 
-        const user = await User.findOne({
-            where: {
+
+            const {
                 userid,
-                deleted_at: null
+                password
+            } = loginSchema.parse(req.body);
+
+            // find user record by userid such that it is not deleted
+            const user = await User.findOne({
+                where: {
+                    userid,
+                    deleted_at: null
+                }
+            });
+
+            // user not found
+            if (!user) {
+                throw new AppException(
+                    `No such user with userid '${userid}' found!`,
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
             }
-        });
 
-        if(!user){
-            throw new AppException(
-                `No such user with userid '${userid}' found!`,
-                HTTP_STATUS.HTTP_404_NOT_FOUND
-            )
+            // check whether user is disabled
+            if (!user.status) {
+                throw new AppException(
+                    `Userid '${userid}' has been disabled!`,
+                    HTTP_STATUS.HTTP_401_UNAUTHORIZED,
+                );
+            }
+
+            const passwordMatch = await bcrypt.compare(password, user.password);
+
+            if (!passwordMatch) {
+                throw new AppException(
+                    `Invalid Userid or Password.`,
+                    HTTP_STATUS.HTTP_401_UNAUTHORIZED,
+                );
+            }
+
+            const userData = UserSchema.parse(user.toJSON());
+
+            const tokend = generate({
+                id: userData.id,
+                userid: userData.userid,
+                email: userData.email
+            });
+
+            return res.status(
+                HTTP_STATUS.HTTP_200_OK.status_code
+            ).json({
+                status: true,
+                message: 'Login successful',
+                data: userData,
+                token: tokend
+            });
+
+        } catch(e){
+            next(e);
         }
-
-        if(!user.status){
-            throw new AppException(
-                `Userid '${userid}' has been disabled!`,
-                HTTP_STATUS.HTTP_401_UNAUTHORIZED,
-            )
-        }
-
-        const login = await bcrypt.compare(password, user.password);
-
-        if(!login){
-
-        }
-
     }
 
 }

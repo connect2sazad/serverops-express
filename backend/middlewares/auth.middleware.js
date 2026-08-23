@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 
-import { JWT_SECRET_KEY } from '../config/config.js';
+import { JWT_EXPIRES_IN, JWT_SECRET_KEY } from '../config/config.js';
 
 export const authenticate = (req, res, next) => {
 
@@ -51,3 +51,25 @@ export const authenticate = (req, res, next) => {
     }
 
 };
+
+export const generate = (data) => {
+
+    const token = jwt.sign(
+        {
+            id: data.id,
+            userid: data.userid,
+            email: data.email
+        },
+        JWT_SECRET_KEY,
+        {
+            expiresIn: JWT_EXPIRES_IN
+        }
+    );
+
+    return {
+        token: token,
+        token_type: 'Bearer',
+        expires_in: JWT_EXPIRES_IN
+    };
+    
+}

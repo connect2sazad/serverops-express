@@ -19,7 +19,7 @@ router.post(REGISTER, validate(registerSchema), async (req, res, next) => {
 });
 
 // login
-router.post(LOGIN | PREFIX, async (req, res, next) => {
+router.post(LOGIN, async (req, res, next) => {
  
   await auth_controller.login(req, res, next);
 

@@ -16,7 +16,7 @@
 
 # POST
 - Register a user: http://127.0.0.1:3100/api/v1/auth/register
-- Login a user: 
+- Login a user: http://127.0.0.1:3100/api/v1/auth/login
   
 ---
   
