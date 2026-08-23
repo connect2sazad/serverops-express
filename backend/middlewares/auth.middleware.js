@@ -2,10 +2,11 @@ import jwt from 'jsonwebtoken';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
+import TokenBlacklist from '../models/token-blacklist.model.js';
 
 import { JWT_EXPIRES_IN, JWT_SECRET_KEY } from '../config/config.js';
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
 
     try{
         const authorization = req.headers.authorization;
@@ -26,12 +27,31 @@ export const authenticate = (req, res, next) => {
             );
         }
 
+        // verify jwt token
         const decoded = jwt.verify(
             token,
             JWT_SECRET_KEY
         );
 
+        // check if the token is in blacklist table
+        const blacklistedToken = await TokenBlacklist.findOne({
+            where: {
+                token,
+            },
+        });
+
+        if(blacklistedToken){
+            throw new AppException(
+                'Authentication token has been revoked.',
+                HTTP_STATUS.HTTP_401_UNAUTHORIZED
+            );
+        }
+
+        // store authenticated user
         req.auth = decoded;
+
+        // store authenticated jwt token
+        req.token = token;
 
         next();
 

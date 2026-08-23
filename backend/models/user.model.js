@@ -13,6 +13,11 @@ const User = sequelize.define(
     {
         ...baseFields,
 
+        user_role_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+
         name: {
             type: DataTypes.STRING(100),
             allowNull: false

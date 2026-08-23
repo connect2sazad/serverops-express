@@ -48,3 +48,6 @@
 
 > ## MD Guide:
 > https://www.markdownguide.org/basic-syntax/
+---
+> ## Generate Secret Key
+> node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"

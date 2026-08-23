@@ -6,6 +6,7 @@ import User from "../models/user.model.js";
 import { UserCreateSchema, UserSchema } from "../schemas/user.schema.js";
 import { loginSchema } from "../schemas/auth.schema.js";
 import { generate } from "../middlewares/auth.middleware.js";
+import TokenBlacklist from "../models/token-blacklist.model.js";
 
 export class AuthController {
 
@@ -130,9 +131,58 @@ export class AuthController {
                 token: tokend
             });
 
-        } catch(e){
+        } catch (e) {
             next(e);
         }
+    }
+
+    async logout(req, res, next) {
+
+        try {
+
+            // get token
+            const token = req.token;
+
+            // if token is not present throw error
+            if (!token) {
+                throw new AppException(
+                    'Authentication token is required.',
+                    HTTP_STATUS.HTTP_401_UNAUTHORIZED
+                );
+            }
+
+            // check if same token is avaialbe in black list
+            const existingToken = await TokenBlacklist.findOne({
+                where: {
+                    token,
+                },
+            });
+
+            if(!existingToken){
+
+                // jwt expiration timestamp
+                const expiresAt = new Date(
+                    req.auth.exp * 1000
+                );
+
+                await TokenBlacklist.create({
+                    token,
+                    user_id: req.auth.id,
+                    expires_at: expiresAt,
+                });
+
+                return res.status(
+                    HTTP_STATUS.HTTP_200_OK.status_code
+                ).json({
+                    status: true,
+                    message: "Logout Successful!"
+                });
+            }
+
+        } catch (e) {
+            next(e);
+        }
+
     }
 
 }
