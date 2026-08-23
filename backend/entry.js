@@ -4,7 +4,7 @@ import express from 'express';
 import { ALLOWED_ORIGINS, API_DOCS_ENABLE } from './config/config.js';
 import AppException from './exceptions/exception.js';
 import HTTP_STATUS from './exceptions/status_codes.js';
-import { requestUUID } from './middlewares/request_uuid.js';
+import { requestUUID } from './middlewares/uuid.middleware.js';
 
 import rootRouter from './root.js';
 
