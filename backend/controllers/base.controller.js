@@ -3,20 +3,23 @@ import HTTP_STATUS from '../exceptions/status_codes.js';
 
 class BaseController {
 
-    constructor(model, schema = null) {
+    constructor(model, {schema= null, createSchema= null, updateSchema= null, creator= false} = {}) {
         this.model = model;
         this.schema = schema;
+        this.createSchema = createSchema;
+        this.updateSchema = updateSchema;
+        this.creator = creator;
     }
 
-    serialize(record) {
+    serialize(record, schema = this.schema) {
 
         if(!record) return null;
         
         const data = record.toJSON ? record.toJSON() : record;
 
-        if(!this.schema) return data;
+        if(!schema) return data;
 
-        return this.schema.parse(data);
+        return schema.parse(data);
 
     }
 
@@ -105,16 +108,20 @@ class BaseController {
 
         try {
 
-            const record = await this.model.create(
-                req.body
-            );
+            const data = { ...req.body };
+
+            if (this.creator) {
+                data.creator_id = req.auth.id;
+            }
+
+            const record = await this.model.create(data);
 
             return res.status(
                 HTTP_STATUS.HTTP_201_CREATED.status_code
             ).json({
                 status: true,
                 message: `${this.model.name} created successfully.`,
-                data: this.serialize(record),
+                data: this.serialize(record, this.createSchema),
             })
 
         } catch (error) {
@@ -130,8 +137,13 @@ class BaseController {
 
             const record = await this.getRecord(req);
 
-            await record.update(req.body);
+            const data = { ...req.body };
 
+            if (this.creator) {
+                data.creator_id = req.auth.id;
+            }
+
+            await record.update(data);
 
             return res.status(
                 HTTP_STATUS.HTTP_200_OK.status_code

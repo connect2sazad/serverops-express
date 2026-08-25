@@ -28,7 +28,7 @@ export const UserCreateSchema = z.object({
 });
 
 // user update schema
-export const userUpdateSchema = z.object({
+export const UserUpdateSchema = z.object({
 
     name: z.string().min(2).max(100).optional(),
 

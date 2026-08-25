@@ -3,7 +3,7 @@ import express from 'express';
 import user_controller from '../controllers/user.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
-import { userUpdateSchema } from '../schemas/user.schema.js';
+import { UserUpdateSchema } from '../schemas/user.schema.js';
 
 const router = express.Router();
 const PREFIX = '/users';
@@ -25,15 +25,15 @@ router.get(USERS, authenticate, async (req, res, next) => {
 
 });
 
-// get a single user details by userid
+// get a single user details by id
 router.get(USER_ID, authenticate, async (req, res, next) => {
-  
+
   await user_controller.get(req, res, next);
 
 });
 
 // update user route
-router.put(USER_ID, authenticate, validate(userUpdateSchema), async (req, res, next) => {
+router.put(USER_ID, authenticate, validate(UserUpdateSchema), async (req, res, next) => {
 
   await user_controller.update(req, res, next);
 
@@ -47,36 +47,40 @@ router.delete(USER_ID, authenticate, async (req, res, next) => {
 });
 
 router.put(USER_ID_ENABLE, authenticate, async (req, res, next) => {
-  req.body.status = true;
+  req.body = {
+    status: true
+  };
   await user_controller.setStatus(req, res, next);
 });
 
 router.put(USER_ID_DISABLE, authenticate, async (req, res, next) => {
-  req.body.status = false;
+  req.body = {
+    status: false
+  };
   await user_controller.setStatus(req, res, next);
 });
 
 router.put(USER_ID_REMARKS, authenticate, async (req, res, next) => {
 
-    await user_controller.setRemarks(req, res, next);
+  await user_controller.setRemarks(req, res, next);
 
 });
 
 router.put(USER_ID_TAGS, authenticate, async (req, res, next) => {
 
-    await user_controller.setTags(req, res, next);
+  await user_controller.setTags(req, res, next);
 
 });
 
 router.delete(USER_ID_REMOVE_REMARKS, authenticate, async (req, res, next) => {
 
-    await user_controller.removeRemarks(req, res, next);
+  await user_controller.removeRemarks(req, res, next);
 
 });
 
 router.delete(USER_ID_REMOVE_TAGS, authenticate, async (req, res, next) => {
 
-    await user_controller.removeTags(req, res, next);
+  await user_controller.removeTags(req, res, next);
 
 });
 

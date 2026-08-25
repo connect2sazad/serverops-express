@@ -9,8 +9,8 @@ const router = express.Router();
 const PREFIX = '/auth';
 
 // string routes
-const REGISTER = PREFIX + '/register';
 const LOGIN = PREFIX + '/login';
+const REGISTER = PREFIX + '/register';
 const LOGOUT = PREFIX + '/logout';
 
 // register a user
@@ -21,6 +21,11 @@ router.post(REGISTER, authenticate, validate(registerSchema), async (req, res, n
 });
 
 // login
+router.post(PREFIX, async (req, res, next) => {
+ 
+  await auth_controller.login(req, res, next);
+
+});
 router.post(LOGIN, async (req, res, next) => {
  
   await auth_controller.login(req, res, next);

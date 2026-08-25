@@ -3,7 +3,7 @@ import HTTP_STATUS from "../exceptions/status_codes.js";
 
 const validate = (schema, source = 'body') => {
 
-    return async (req, resizeBy, next) => {
+    return async (req, res, next) => {
 
         try{
 

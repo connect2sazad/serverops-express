@@ -18,6 +18,7 @@ module.exports = {
       },
       onUpdate: 'CASCADE',
       onDelete: 'RESTRICT',
+      defaultValue: 1
     });
   },
 
