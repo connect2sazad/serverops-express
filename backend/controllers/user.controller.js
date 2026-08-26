@@ -1,17 +1,25 @@
 import BaseController from './base.controller.js';
-import { User } from '../models/index.js';
+import { User, UserRole } from '../models/index.js';
 import { UserSchema } from '../schemas/user.schema.js';
 
-export class UserController extends BaseController{
+export class UserController extends BaseController {
 
-    constructor(){
+    constructor() {
 
         const settings = {
-            schema: UserSchema
+            schema: UserSchema,
+            includes: [
+                {
+                    model: UserRole,
+                    as: 'role',
+                }
+            ],
+
         };
 
         super(User, settings);
     }
+
 
 }
 

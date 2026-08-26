@@ -3,27 +3,28 @@ import HTTP_STATUS from '../exceptions/status_codes.js';
 
 class BaseController {
 
-    constructor(model, {schema= null, createSchema= null, updateSchema= null, creator= false} = {}) {
+    constructor(model, { schema = null, createSchema = null, updateSchema = null, creator = false, includes = null } = {}) {
         this.model = model;
         this.schema = schema;
         this.createSchema = createSchema;
         this.updateSchema = updateSchema;
         this.creator = creator;
+        this.includes = includes;
     }
 
     serialize(record, schema = this.schema) {
 
-        if(!record) return null;
-        
+        if (!record) return null;
+
         const data = record.toJSON ? record.toJSON() : record;
 
-        if(!schema) return data;
+        if (!schema) return data;
 
         return schema.parse(data);
 
     }
 
-    serializeMany(records){
+    serializeMany(records) {
 
         return records.map(
             record => this.serialize(record)
@@ -43,7 +44,13 @@ class BaseController {
             // get single record
             if (id) {
 
-                const record = await this.model.findByPk(id);
+                const record = await this.model.findOne({
+                    where: {
+                        id,
+                        deleted_at: null
+                    },
+                    include: this.includes,
+                });
 
                 if (!record) {
 
@@ -116,6 +123,11 @@ class BaseController {
 
             const record = await this.model.create(data);
 
+            // add user role details
+            await record.reload({
+                include: this.includes,
+            });
+
             return res.status(
                 HTTP_STATUS.HTTP_201_CREATED.status_code
             ).json({
@@ -143,7 +155,12 @@ class BaseController {
                 data.creator_id = req.auth.id;
             }
 
-            await record.update(data);
+            const updated_record = await record.update(data);
+
+            // add user role details
+            await updated_record.reload({
+                include: this.includes,
+            });
 
             return res.status(
                 HTTP_STATUS.HTTP_200_OK.status_code

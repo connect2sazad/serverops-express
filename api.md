@@ -1,4 +1,22 @@
+# Common
+
+## Commands
+<div style="border-left: 4px solid red; padding-left: 10px;">
+
+|   Action     |    Command    |
+|--------------|---------------|
+|   **Generate Secret Key**    |   ```node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"```   |
+|   **Start Backend**    |   ```npm run dev```   |
+|   **Create Migration**    |   ```npx sequelize-cli migration:generate --name migration-file-name-here-in-this-format```   |
+|   **Run Migration**    |   ```npx sequelize-cli db:migrate```   |
+|   **Create Seed**    |   ``` npx sequelize-cli seed:generate --name seeding-file-name-here-in-this-format```   |
+|   **Run Seeding**    |   ```npx sequelize-cli db:seed:all```   |
+
+</div>
+
+
 # Backend
+
 ## Auth
 >|   Action |    Request Type    |   Link    |   Request Body    |
 >|----------|--------------------|-----------|-------------------|
@@ -111,11 +129,17 @@
     "operating_system": "Ubuntu 22.04",
     "description": "Test Instance"
 }
-
-
+```
+## Create/Update Credential
+```
+{
+    "inventory_id": 1,
+    "username": "ubuntu",
+    "type": "password",
+    "secret": "abc123"
+}
+```
+---
 
 > ### MD Guide:
 > https://www.markdownguide.org/basic-syntax/
----
-> ### Generate Secret Key
-> node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"

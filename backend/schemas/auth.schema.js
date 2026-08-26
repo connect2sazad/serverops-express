@@ -22,6 +22,8 @@ export const registerSchema = z.object({
 
     confirm_password: z.string().min(6).max(100),
 
+    user_role_id: z.number().int(),
+
 }).refine(
 
     data => data.password === data.confirm_password,

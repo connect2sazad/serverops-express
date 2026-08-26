@@ -27,11 +27,6 @@ const Inventory = sequelize.define(
             defaultValue: 22,
         },
 
-        ssh_username: {
-            type: DataTypes.STRING(100),
-            allowNull: false
-        },
-
         environment: {
             type: DataTypes.STRING(100),
             allowNull: false,

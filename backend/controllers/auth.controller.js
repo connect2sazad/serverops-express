@@ -18,6 +18,7 @@ export class AuthController {
                 name,
                 email,
                 password,
+                user_role_id,
                 confirm_password
             } = req.body;
 
@@ -53,7 +54,17 @@ export class AuthController {
                 userid,
                 email,
                 name,
-                password: hashed_password
+                user_role_id,
+                password: hashed_password,
+            });
+
+            await user.reload({
+                include: [
+                    {
+                        model: UserRole,
+                        as: 'role'
+                    }
+                ]
             });
 
             return res.status(
@@ -61,7 +72,7 @@ export class AuthController {
             ).json({
                 status: true,
                 message: `${User.name} registered successfully.`,
-                data: UserCreateSchema.parse(user.toJSON()),
+                data: UserSchema.parse(user.toJSON()),
             })
 
         } catch (error) {

@@ -1,5 +1,5 @@
 import BaseController from './base.controller.js';
-import { Inventory } from '../models/index.js';
+import { Inventory, User } from '../models/index.js';
 import { InventoryCreateSchema, InventorySchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
 
 export class InventoryController extends BaseController{
@@ -11,6 +11,12 @@ export class InventoryController extends BaseController{
             createSchema: InventoryCreateSchema,
             updateSchema: InventoryUpdateSchema,
             creator: true,
+            includes: [
+                {
+                    model: User,
+                    as: 'creator',
+                }
+            ],
         });
     }
 

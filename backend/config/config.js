@@ -1,8 +1,8 @@
 import 'dotenv/config'
-import { execSync } from 'node:child_process';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
+import {  parseMemorySize } from './helpers.js';
 
 export const PROJECT_NAME = process.env.PROJECT_NAME || 'serverops';
 export const PROJECT_TITLE = process.env.PROJECT_TITLE || 'ServerOps';
@@ -20,6 +20,7 @@ export const DB_USER = getRequiredEnv('DB_USER');
 export const DB_PASSWORD = getRequiredEnv('DB_PASSWORD', true);
 export const API_PREFIX = getRequiredEnv('API_PREFIX', true);
 export const ALLOWED_ORIGINS = getRequiredEnv('ALLOWED_ORIGINS', true);
+export const MAX_FILE_UPLOAD_SIZE = parseMemorySize(process.env.MAX_FILE_UPLOAD_SIZE || '5M');
 
 export const NODE_MIN_REQUIRED_VERSION = process.env.NODE_MIN_REQUIRED_VERSION || '22.0.0';
 
