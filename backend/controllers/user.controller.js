@@ -1,5 +1,5 @@
 import BaseController from './base.controller.js';
-import User from '../models/user.model.js';
+import { User } from '../models/index.js';
 import { UserSchema } from '../schemas/user.schema.js';
 
 export class UserController extends BaseController{

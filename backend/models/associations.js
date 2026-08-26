@@ -4,7 +4,7 @@ import Inventory from "./inventory.model.js";
 
 User.belongsTo(UserRole, {
     foreignKey: 'user_role_id',
-    as: 'user_roles',
+    as: 'role',
 });
 
 UserRole.hasMany(User, {
@@ -14,7 +14,7 @@ UserRole.hasMany(User, {
 
 Inventory.belongsTo(User, {
     foreignKey: 'creator_id',
-    as: 'users',
+    as: 'user',
 });
 
 User.hasMany(Inventory, {

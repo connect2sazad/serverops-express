@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import BaseSchema from './base.schema.js';
+import { UserRoleSchema } from './user-role.schema.js';
 
 // user response schema
 export const UserSchema = BaseSchema.extend({
@@ -9,6 +10,8 @@ export const UserSchema = BaseSchema.extend({
     email: z.string(),
 
     name: z.string(),
+
+    role: UserRoleSchema.optional(),
 
 });
 

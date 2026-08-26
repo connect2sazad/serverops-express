@@ -4,7 +4,7 @@ import sequelize from "../config/sequelize.js";
 import { baseFields, baseOptions } from "./base.model.js";
 
 const UserRole = sequelize.define(
-    'User Role',
+    'UserRole',
     {
         ...baseFields,
         name: {

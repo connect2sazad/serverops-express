@@ -1,5 +1,5 @@
 import BaseController from "./base.controller.js";
-import UserRole from '../models/user-role.model.js';
+import { UserRole } from '../models/index.js';
 import { UserRoleCreateSchema, UserRoleSchema, UserRoleUpdateSchema } from "../schemas/user-role.schema.js";
 
 export class UserRoleController extends BaseController{

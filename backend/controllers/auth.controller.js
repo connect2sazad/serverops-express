@@ -2,11 +2,10 @@ import bcrypt from "bcryptjs";
 
 import AppException from "../exceptions/exception.js";
 import HTTP_STATUS from "../exceptions/status_codes.js";
-import User from "../models/user.model.js";
+import { User, TokenBlacklist, UserRole } from "../models/index.js";
 import { UserCreateSchema, UserSchema } from "../schemas/user.schema.js";
 import { loginSchema } from "../schemas/auth.schema.js";
 import { generate } from "../middlewares/auth.middleware.js";
-import TokenBlacklist from "../models/token-blacklist.model.js";
 
 export class AuthController {
 
@@ -86,7 +85,13 @@ export class AuthController {
                 where: {
                     userid,
                     deleted_at: null
-                }
+                },
+                include: [
+                    {
+                        model: UserRole,
+                        as: 'role'
+                    }
+                ]
             });
 
             // user not found
@@ -127,7 +132,7 @@ export class AuthController {
             ).json({
                 status: true,
                 message: 'Login successful',
-                data: userData,
+                data: UserSchema.parse(userData),
                 token: tokend
             });
 

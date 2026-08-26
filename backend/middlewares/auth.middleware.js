@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
-import TokenBlacklist from '../models/token-blacklist.model.js';
+import { TokenBlacklist } from '../models/index.js';
 
 import { JWT_EXPIRES_IN, JWT_SECRET_KEY } from '../config/config.js';
 
