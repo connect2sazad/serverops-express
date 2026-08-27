@@ -1,8 +1,10 @@
 import User from "./user.model.js";
 import UserRole from "./user-role.model.js";
 import Inventory from "./inventory.model.js";
-import Credential from "./credentials.model.js";
+import Credential from "./credential.model.js";
+import CommandExecution from "./command-execution.model.js";
 
+// =============================USER, USER ROLE============================
 // associate user to user role
 User.belongsTo(UserRole, {
     foreignKey: 'user_role_id',
@@ -13,6 +15,7 @@ UserRole.hasMany(User, {
     as: 'users'
 });
 
+// =============================INVENTORY, USER============================
 // associate inventory to creator user
 Inventory.belongsTo(User, {
     foreignKey: 'creator_id',
@@ -23,6 +26,7 @@ User.hasMany(Inventory, {
     as: 'inventories',
 });
 
+// =============================CREDENTIAL, INVENTORY, USER============================
 // associate credential to creator user
 Credential.belongsTo(User, {
     foreignKey: 'creator_id',
@@ -44,8 +48,42 @@ Inventory.hasMany(Credential, {
     as: 'credentials',
 });
 
+
+// =============================COMMAND EXECUTION, CREDENTIAL, INVENTORY, USER============================
+// associate command execution to creator user
+CommandExecution.belongsTo(User, {
+    foreignKey: 'creator_id',
+    as: 'creator',
+});
+User.hasMany(CommandExecution, {
+    foreignKey: 'creator_id',
+    as: 'command_executions',
+});
+
+// associate inventory to command execution
+CommandExecution.belongsTo(Inventory, {
+    foreignKey: 'inventory_id',
+    as: 'inventory',
+});
+
+Inventory.hasMany(CommandExecution, {
+    foreignKey: 'inventory_id',
+    as: 'command_executions',
+});
+
+CommandExecution.belongsTo(Credential, {
+    foreignKey: 'credential_id',
+    as: 'credential',
+});
+
+Credential.hasMany(CommandExecution, {
+    foreignKey: 'credential_id',
+    as: 'command_executions',
+});
+
 export {
     User,
     UserRole,
     Inventory,
+    CommandExecution,
 }

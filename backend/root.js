@@ -9,6 +9,7 @@ import authRouter from './routes/auth.route.js';
 import userRolesRouter from './routes/user-roles.route.js';
 import inventoriesRouter from './routes/inventories.route.js';
 import credentialsRouter from './routes/credentials.route.js';
+import commandExecutionsRouter from './routes/command-executions.route.js';
 import HTTP_STATUS from "./exceptions/status_codes.js";
 
 const router = express.Router();
@@ -33,5 +34,7 @@ router.use(API_PREFIX, userRolesRouter);
 router.use(API_PREFIX, inventoriesRouter);
 // credentials router
 router.use(API_PREFIX, credentialsRouter);
+// command Executions router
+router.use(API_PREFIX, commandExecutionsRouter);
 
 export default router;

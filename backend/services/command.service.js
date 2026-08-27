@@ -3,8 +3,9 @@ import ssh_service from "./ssh.service.js";
 
 class CommandService {
 
-    async execute(inventory, credential, command){
+    async execute(inventory, credential, command) {
 
+        const startedAt = Date.now();
         const client = await ssh_service.connect(
             inventory,
             credential
@@ -12,7 +13,6 @@ class CommandService {
 
         try {
 
-            const startedAt = Date.now();
 
             const result =
                 await ssh_service.executeCommandOnConnection(client, command);
@@ -25,13 +25,27 @@ class CommandService {
                 stdout: result.stdout,
                 stderr: result.stderr,
                 exitCode: result.exitCode,
-                status,
+                commandStatus: status,
                 metadata: {
                     startedAt,
                     duration
                 }
             }
 
+        } catch (error) {
+            if (error.code === 'COMMAND_TIMEOUT') {
+
+                return {
+                    stdout: '',
+                    stderr: '',
+                    exitCode: null,
+                    commandStatus: 'timeout',
+                    metadata: {
+                        startedAt,
+                        duration: 30000,
+                    },
+                };
+            }
         } finally {
             client.end()
         }

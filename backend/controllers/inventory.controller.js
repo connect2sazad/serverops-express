@@ -276,7 +276,7 @@ export class InventoryController extends BaseController {
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,
-                message: `command executed${connection.status==="success" ? ' successfully' : '' }`,
+                message: `command executed${connection.commandStatus==="success" ? ' successfully' : '' }`,
                 data: {
                     connection
                 }

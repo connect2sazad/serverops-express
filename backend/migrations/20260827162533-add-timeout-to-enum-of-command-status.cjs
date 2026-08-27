@@ -9,6 +9,14 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
+    await queryInterface.changeColumn(
+      'command_executions',
+      'command_status',
+      {
+        type: Sequelize.ENUM(['success', 'failed', 'timeout']),
+        allowNull: true,
+      }
+    );
   },
 
   async down (queryInterface, Sequelize) {
@@ -18,5 +26,13 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
+    await queryInterface.changeColumn(
+      'command_executions',
+      'command_status',
+      {
+        type: Sequelize.ENUM(['success', 'failed']),
+        allowNull: true,
+      }
+    );
   }
 };

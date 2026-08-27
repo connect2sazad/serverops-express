@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { InventoryCreateSchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
 import { CommandExecutionSchema } from '../schemas/command.schema.js';
+import command_controller from '../controllers/command-execution.controller.js';
 
 const router = express.Router();
 const PREFIX = '/inventories';
@@ -137,7 +138,7 @@ router.get(INVENTORY_ID_DISCOVER, authenticate, async (req, res, next) => {
 
 // command
 router.post(INVENTORY_ID_COMMAND, authenticate, validate(CommandExecutionSchema), async (req, res, next) => {
-  await inventory_controller.execute(req, res, next);
+  await command_controller.execute(req, res, next);
 });
 
 export default router;

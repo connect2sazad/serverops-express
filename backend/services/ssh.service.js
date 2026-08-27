@@ -209,7 +209,7 @@ class SSHService {
 
                 client.exec(command, (err, stream) => {
 
-                    if(err){
+                    if (err) {
                         duration = getDuration(startedAt);
                         client.end();
                         err.info.startedAt = startedAt;
@@ -251,7 +251,7 @@ class SSHService {
     }
 
     // fucntion to connect to server and keep it untill it is disconnected
-    async connect(inventory, credential){
+    async connect(inventory, credential) {
 
         let presentedFingerprint = null;
 
@@ -274,18 +274,18 @@ class SSHService {
             const client = new Client();
 
             client
-            .on('ready', () =>{
-                resolve(client);
-            })
-            .on('error', reject)
-            .connect(config);
+                .on('ready', () => {
+                    resolve(client);
+                })
+                .on('error', reject)
+                .connect(config);
 
         });
 
     }
 
     // fucntion to execute commands while the server is connevcted through this.connect()
-    async executeCommandOnConnection(client, command, timeout=30000) {
+    async executeCommandOnConnection(client, command, timeout = 30000) {
 
         return new Promise((resolve, reject) => {
 
@@ -294,7 +294,7 @@ class SSHService {
 
             client.exec(command, (err, stream) => {
 
-                if(err){
+                if (err) {
                     return reject(err);
                 }
 
@@ -302,7 +302,7 @@ class SSHService {
                 let stderr = '';
 
                 const cleanup = () => {
-                    if(timer){
+                    if (timer) {
                         clearTimeout(timer);
                         timer = null;
                     }
@@ -310,7 +310,7 @@ class SSHService {
 
                 timer = setTimeout(() => {
 
-                    if(finished) return;
+                    if (finished) return;
 
                     finished = true;
 
@@ -318,12 +318,14 @@ class SSHService {
 
                     cleanup();
 
-                    reject(
-                        new AppException(
-                            `Command timed out after ${timeout}ms`,
-                            HTTP_STATUS.HTTP_408_REQUEST_TIMEOUT
-                        )
+                    const timeoutError = new AppException(
+                        `Command timed out after ${timeout}ms`,
+                        HTTP_STATUS.HTTP_408_REQUEST_TIMEOUT
                     );
+
+                    timeoutError.code = 'COMMAND_TIMEOUT';
+
+                    reject(timeoutError);
 
                 }, timeout);
 
@@ -337,7 +339,7 @@ class SSHService {
 
                 stream.on('close', code => {
 
-                    if(finished) return;
+                    if (finished) return;
 
                     finished = true;
                     cleanup();

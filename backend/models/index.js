@@ -2,7 +2,8 @@ import User from './user.model.js';
 import UserRole from './user-role.model.js';
 import Inventory from './inventory.model.js';
 import TokenBlacklist from './token-blacklist.model.js';
-import Credential from './credentials.model.js';
+import Credential from './credential.model.js';
+import CommandExecution from './command-execution.model.js';
 
 import './associations.js';
 
@@ -12,6 +13,7 @@ export {
   Inventory,
   TokenBlacklist,
   Credential,
+  CommandExecution,
 };
 
 export default {
@@ -20,4 +22,5 @@ export default {
   Inventory,
   TokenBlacklist,
   Credential,
+  CommandExecution,
 };
