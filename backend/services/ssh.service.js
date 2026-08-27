@@ -109,8 +109,10 @@ class SSHService {
 
             return {
                 success: true,
-                duration,
-                startedAt
+                metadata: {
+                    duration,
+                    startedAt,
+                },
             };
         } catch (error) {
             if (!inventory.ssh_host_key_fingerprint) {

@@ -178,7 +178,7 @@ export class InventoryController extends BaseController {
 
             // // get the connection details
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = connection.startedAt;
+            inventory.last_connected_at = connection.metadata.startedAt;
 
             // // save the details in db
             await inventory.save();
