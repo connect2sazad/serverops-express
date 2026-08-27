@@ -4,6 +4,7 @@ import inventory_controller from '../controllers/inventory.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { InventoryCreateSchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
+import { CommandExecutionSchema } from '../schemas/command.schema.js';
 
 const router = express.Router();
 const PREFIX = '/inventories';
@@ -26,6 +27,7 @@ const INVENTORY_ID_HOST_KEY = PREFIX + '/:id/host-key';
 const INVENTORY_ID_HOST_KEY_TRUST = PREFIX + '/:id/host-key/trust';
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
 const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discover';
+const INVENTORY_ID_COMMAND = PREFIX + '/:id/command';
 
 // get all inventories
 router.get(INVENTORIES, authenticate, async (req, res, next) => {
@@ -131,6 +133,11 @@ router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, async (req, res, next) =>
 // discovery
 router.get(INVENTORY_ID_DISCOVER, authenticate, async (req, res, next) => {
   await inventory_controller.discover(req, res, next);
+});
+
+// command
+router.post(INVENTORY_ID_COMMAND, authenticate, validate(CommandExecutionSchema), async (req, res, next) => {
+  await inventory_controller.execute(req, res, next);
 });
 
 export default router;

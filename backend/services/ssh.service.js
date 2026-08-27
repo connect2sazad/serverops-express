@@ -285,9 +285,12 @@ class SSHService {
     }
 
     // fucntion to execute commands while the server is connevcted through this.connect()
-    async executeCommandOnConnection(client, command) {
+    async executeCommandOnConnection(client, command, timeout=30000) {
 
         return new Promise((resolve, reject) => {
+
+            let timer = null;
+            let finished = false;
 
             client.exec(command, (err, stream) => {
 
@@ -298,6 +301,32 @@ class SSHService {
                 let stdout = '';
                 let stderr = '';
 
+                const cleanup = () => {
+                    if(timer){
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                }
+
+                timer = setTimeout(() => {
+
+                    if(finished) return;
+
+                    finished = true;
+
+                    stream.close();
+
+                    cleanup();
+
+                    reject(
+                        new AppException(
+                            `Command timed out after ${timeout}ms`,
+                            HTTP_STATUS.HTTP_408_REQUEST_TIMEOUT
+                        )
+                    );
+
+                }, timeout);
+
                 stream.on('data', data => {
                     stdout += data.toString();
                 });
@@ -307,6 +336,12 @@ class SSHService {
                 });
 
                 stream.on('close', code => {
+
+                    if(finished) return;
+
+                    finished = true;
+                    cleanup();
+
                     resolve({
                         stdout,
                         stderr,

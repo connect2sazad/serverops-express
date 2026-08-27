@@ -5,6 +5,7 @@ import { CredentialSchema } from '../schemas/credential.schema.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 import ssh_service from '../services/ssh.service.js';
 import discovery_service from '../services/discovery.service.js';
+import command_service from '../services/command.service.js';
 
 export class InventoryController extends BaseController {
 
@@ -232,6 +233,50 @@ export class InventoryController extends BaseController {
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,
                 message: "discovery successfull",
+                data: {
+                    connection
+                }
+            });
+
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async execute(req, res, next) {
+        try {
+
+            const { id } = req.params
+            const { command } = req.body;
+
+            const inventory = await Inventory.findOne({
+                where: {
+                    id,
+                    deleted_at: null
+                }
+            });
+
+            const credential = await Credential.findOne({
+                where: {
+                    inventory_id: inventory.id,
+                    deleted_at: null
+                }
+            });
+
+            const connection = await command_service.execute(
+                inventory, credential, command
+            );
+
+            // get the connection details
+            inventory.connection_status = 'disconnected';
+            inventory.last_connected_at = connection.metadata.startedAt;
+
+            // save the details in db
+            await inventory.save();
+
+            res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+                success: true,
+                message: `command executed${connection.status==="success" ? ' successfully' : '' }`,
                 data: {
                     connection
                 }

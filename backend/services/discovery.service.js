@@ -79,16 +79,17 @@ class DiscoveryService {
         try {
 
             const command = `
-                printf 'HOSTNAME='; hostname
-                printf 'OS='; . /etc/os-release && printf '%s' "$NAME"
-                printf 'OS_VERSION='; . /etc/os-release && printf '%s' "$VERSION"
-                printf 'OS_PRETTY_NAME='; . /etc/os-release && printf '%s' "$PRETTY_NAME"
-                printf 'OS_VERSION_ID='; . /etc/os-release && printf '%s' "$VERSION_ID"
-                printf 'KERNEL='; uname -r
-                printf 'ARCH='; uname -m
-                printf 'CPU_CORES='; nproc
-                printf 'MEMORY_KIB='; awk '/MemTotal/ {print $2}' /proc/meminfo
-                printf 'UPTIME_SECONDS='; awk '{print int($1)}' /proc/uptime
+                printf 'HOSTNAME=%s\\n' "$(hostname)"
+                . /etc/os-release
+                printf 'OS=%s\\n' "$NAME"
+                printf 'OS_VERSION=%s\\n' "$VERSION"
+                printf 'OS_PRETTY_NAME=%s\\n' "$PRETTY_NAME"
+                printf 'OS_VERSION_ID=%s\\n' "$VERSION_ID"
+                printf 'KERNEL=%s\\n' "$(uname -r)"
+                printf 'ARCH=%s\\n' "$(uname -m)"
+                printf 'CPU_CORES=%s\\n' "$(nproc)"
+                printf 'MEMORY_KIB=%s\\n' "$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+                printf 'UPTIME_SECONDS=%s\\n' "$(awk '{print int($1)}' /proc/uptime)"
             `;
 
             const result = await ssh_service.executeCommandOnConnection(
