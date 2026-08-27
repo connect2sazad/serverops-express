@@ -33,3 +33,7 @@ export const getFingerprint = (key) => {
         .digest('base64')}`;
 
 }
+
+export const getDuration = startedAt => {
+    return Date.now() - startedAt;
+}

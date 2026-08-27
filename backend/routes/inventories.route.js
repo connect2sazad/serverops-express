@@ -25,6 +25,7 @@ const INVENTORY_ID_CREDENTIALS = PREFIX + '/:id/credentials';
 const INVENTORY_ID_HOST_KEY = PREFIX + '/:id/host-key';
 const INVENTORY_ID_HOST_KEY_TRUST = PREFIX + '/:id/host-key/trust';
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
+const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discover';
 
 // get all inventories
 router.get(INVENTORIES, authenticate, async (req, res, next) => {
@@ -125,6 +126,11 @@ router.get(INVENTORY_ID_HOST_KEY_TRUST, authenticate, async (req, res, next) => 
 // test ssh connection
 router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, async (req, res, next) => {
   await inventory_controller.testConnection(req, res, next);
+});
+
+// discovery
+router.get(INVENTORY_ID_DISCOVER, authenticate, async (req, res, next) => {
+  await inventory_controller.discover(req, res, next);
 });
 
 export default router;

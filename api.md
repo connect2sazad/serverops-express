@@ -87,6 +87,7 @@
 >|   **HOST KEY**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key    |  None |
 >|   **HOST KEY TRUST**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key/trust    |  None |
 >|   **TEST CONNECTION**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/test-connection    |  None |
+>|   **DISCOVER**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/discover    |  None |
 
 ## Credentials
 >|   Action |    Request Type    |   Link    |   Request Body    |

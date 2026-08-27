@@ -1,8 +1,10 @@
 import BaseController from './base.controller.js';
 import { Inventory, User, Credential } from '../models/index.js';
 import { InventoryCreateSchema, InventorySchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
+import { CredentialSchema } from '../schemas/credential.schema.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 import ssh_service from '../services/ssh.service.js';
+import discovery_service from '../services/discovery.service.js';
 
 export class InventoryController extends BaseController {
 
@@ -149,6 +151,13 @@ export class InventoryController extends BaseController {
                 }
             });
 
+            if (!inventory) {
+                throw new AppException(
+                    'Inventory not found',
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
             const credential = await Credential.findOne({
                 where: {
                     inventory_id: inventory.id,
@@ -156,15 +165,22 @@ export class InventoryController extends BaseController {
                 }
             });
 
+            if (!credential) {
+                throw new AppException(
+                    'No credential found for this inventory',
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
             const connection = await ssh_service.testConnection(
                 inventory, credential
             );
 
-            // get the connection details
+            // // get the connection details
             inventory.connection_status = 'disconnected';
             inventory.last_connected_at = connection.startedAt;
 
-            // save the details in db
+            // // save the details in db
             await inventory.save();
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
@@ -172,8 +188,8 @@ export class InventoryController extends BaseController {
                 message: "connection successfull",
                 data: {
                     connection,
-                    inventory,
-                    credential
+                    inventory: InventorySchema.parse(inventory.toJSON()),
+                    credential: CredentialSchema.parse(credential.toJSON())
                 }
             });
 
@@ -181,6 +197,49 @@ export class InventoryController extends BaseController {
             next(e);
         }
 
+    }
+
+    async discover(req, res, next) {
+        try {
+
+            const { id } = req.params
+
+            const inventory = await Inventory.findOne({
+                where: {
+                    id,
+                    deleted_at: null
+                }
+            });
+
+            const credential = await Credential.findOne({
+                where: {
+                    inventory_id: inventory.id,
+                    deleted_at: null
+                }
+            });
+
+            const connection = await discovery_service.discover(
+                inventory, credential
+            );
+
+            // get the connection details
+            inventory.connection_status = 'disconnected';
+            inventory.last_connected_at = connection.metadata.startedAt;
+
+            // save the details in db
+            await inventory.save();
+
+            res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+                success: true,
+                message: "discovery successfull",
+                data: {
+                    connection
+                }
+            });
+
+        } catch (e) {
+            next(e);
+        }
     }
 
 }
