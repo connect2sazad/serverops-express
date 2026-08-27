@@ -3,3 +3,7 @@
 *.zip
 */.env
 multer-info.md
+
+*/storage/uploads/*
+
+!.gitkeep

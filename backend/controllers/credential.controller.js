@@ -3,6 +3,7 @@ import { Credential, User, Inventory } from '../models/index.js';
 import { CredentialSchema, CredentialCreateSchema, CredentialUpdateSchema } from '../schemas/credential.schema.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 import AppException from '../exceptions/exception.js';
+import encryptor_service from '../services/encryption.service.js';
 
 class CredentialController extends BaseController {
 
@@ -34,24 +35,37 @@ class CredentialController extends BaseController {
 
             const data = this.createSchema.parse(req.body);
 
-            if (data.type === 'private-key' && !req.file) {
-                throw new AppException(
-                    'Private Key file is required for private-key credentials.',
-                    HTTP_STATUS.HTTP_400_BAD_REQUEST
-                );
-            }
-
-            if (data.type === 'password' && req.file) {
-                throw new AppException(
-                    'Private Key file is not allowed for password credentials.',
-                    HTTP_STATUS.HTTP_400_BAD_REQUEST
-                );
-            }
-
             let secret = data.secret ?? null;
+            let passphrase = data.passphrase ?? null;
 
+            // if type is password, then encrypt the password before storing it in db
+            if (data.type === 'password') {
+                if (!data.secret) {
+                    throw new AppException(
+                        'Password is required!',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
+
+                secret = encryptor_service.encrypt(data.secret);
+            }
+
+            // if type is private-key, then store the private-key path
             if (data.type === 'private-key') {
-                secret = req.file.buffer.toString('utf8');
+
+                if (!req.file) {
+                    throw new AppException(
+                        'Private Key file is required!',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
+
+                secret = req.file.path;
+
+                // encrypt the passphrase
+                if (data.passphrase) {
+                    passphrase = encryptor_service.encrypt(data.passphrase);
+                }
             }
 
             const credential = await Credential.create({
@@ -59,7 +73,7 @@ class CredentialController extends BaseController {
                 username: data.username,
                 type: data.type,
                 secret,
-                passphrase: data.passphrase ?? null,
+                passphrase,
                 creator_id: req.auth.id
             });
 
@@ -100,7 +114,49 @@ class CredentialController extends BaseController {
                 );
             }
 
-            const updated_credential = await credential.update(data);
+            const updateData = {
+                ...data,
+            };
+
+            console.log("data.type: ", data.type);
+            
+
+            // if type is not provided in data, get it from existing credential data
+            if(!data.type){
+                data.type = credential.type;
+            }
+
+            // if type is password, then encrypt the password before storing it in db
+            if (data.type === 'password') {
+                if (!data.secret) {
+                    throw new AppException(
+                        'Password is required!',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
+
+                updateData.secret = encryptor_service.encrypt(data.secret);
+                // set the passphrase to null
+                updateData.passphrase = null;
+            }
+
+            // If a new private key file is uploaded,
+            // replace the secret with the new file path.
+            if (data.type === 'private-key') {
+
+                if (req.file) {
+                    updateData.secret = req.file.path;
+                }
+
+                // encrypt the passphrase
+                if (data.passphrase) {
+                    updateData.passphrase = encryptor_service.encrypt(data.passphrase);
+                }
+
+            }
+
+            // update the current data in db
+            const updated_credential = await credential.update(updateData);
 
             await updated_credential.reload({
                 include: this.includes,

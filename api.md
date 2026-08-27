@@ -6,6 +6,7 @@
 |   Action     |    Command    |
 |--------------|---------------|
 |   **Generate Secret Key**    |   ```node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"```   |
+|   **Generate Encryption Key**    |   ```node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"```   |
 |   **Start Backend**    |   ```npm run dev```   |
 |   **Create Migration**    |   ```npx sequelize-cli migration:generate --name migration-file-name-here-in-this-format```   |
 |   **Run Migration**    |   ```npx sequelize-cli db:migrate```   |
@@ -75,6 +76,21 @@
 >|   **DELETE**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1    |  None |
 >|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/remarks/remove    |  None |
 >|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/tags/remove    |  None |
+
+## Credentials
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/credentials    |  None |
+>|   **VIEW**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/credentials/1    |  None |
+>|   **CREATE**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/credentials    | [JSON](#createupdate-credential) |
+>|   **UPDATE**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/credentials/1    | [JSON](#createupdate-credential) |
+>|   **ENABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/credentials/1/enable    |   None |
+>|   **DISABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/credentials/1/disable    |  None |
+>|   **SET REMARKS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/credentials/1/remarks   | [JSON](#createupdate-credential) |
+>|   **SET TAGS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/credentials/1/tags    | [JSON](#createupdate-credential) |
+>|   **DELETE**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/credentials/1    |  None |
+>|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/credentials/1/remarks/remove    |  None |
+>|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/credentials/1/tags/remove    |  None |
 
 
 

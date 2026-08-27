@@ -1,8 +1,10 @@
-import 'dotenv/config'
+import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
-import {  parseMemorySize } from './helpers.js';
+import { parseMemorySize } from '../services/helpers.service.js';
 
 export const PROJECT_NAME = process.env.PROJECT_NAME || 'serverops';
 export const PROJECT_TITLE = process.env.PROJECT_TITLE || 'ServerOps';
@@ -21,6 +23,26 @@ export const DB_PASSWORD = getRequiredEnv('DB_PASSWORD', true);
 export const API_PREFIX = getRequiredEnv('API_PREFIX', true);
 export const ALLOWED_ORIGINS = getRequiredEnv('ALLOWED_ORIGINS', true);
 export const MAX_FILE_UPLOAD_SIZE = parseMemorySize(process.env.MAX_FILE_UPLOAD_SIZE || '5M');
+export const FILE_UPLOAD_DIR = process.env.FILE_UPLOAD_DIR || 'storage/uploads';
+export const ENCRYPTION_ALGORITHM = process.env.ENCRYPTION_ALGORITHM || 'aes-256-gcm';
+export const ENCRYPTION_KEY = Buffer.from(getRequiredEnv('ENCRYPTION_KEY'), 'base64');
+
+// if encryption key is not 32
+if (ENCRYPTION_KEY.length !== 32) {
+    throw new AppException(
+        'ENCRYPTION_KEY must be exactly 32 bytes.',
+        HTTP_STATUS.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+}
+
+// get real path of upload directory
+const uploadDirectory = path.resolve(FILE_UPLOAD_DIR);
+// make dirs and parent dirs if dir is not present
+if (!fs.existsSync(uploadDirectory)) {
+    fs.mkdirSync(uploadDirectory, {
+        recursive: true
+    });
+}
 
 export const NODE_MIN_REQUIRED_VERSION = process.env.NODE_MIN_REQUIRED_VERSION || '22.0.0';
 
