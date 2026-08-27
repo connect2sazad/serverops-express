@@ -23,6 +23,7 @@
     "multer": "^2.2.0",
     "mysql2": "^3.23.4",
     "sequelize": "^6.37.8",
+    "ssh2": "^1.17.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
