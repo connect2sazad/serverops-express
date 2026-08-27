@@ -4,74 +4,157 @@ import fs from 'fs/promises';
 import encryptor_service from './encryption.service.js';
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
+import { getFingerprint } from './helpers.service.js';
 
 class SSHService {
-    async testConnection(inventory, credential){
 
+    async buildConfig(inventory, credential, hostVerifier) {
         const config = {
             host: inventory.hostname,
-            port: inventory.port ?? 22,
+            port: inventory.ssh_port ?? 22,
             username: credential.username,
+            hostVerifier,
         };
 
-        if(credential.type === 'password') {
-            // if the credential type is a password, then decrypot the secret
-            config.password = encryptor_service.tryDecrypt(credential.secret);
-        } else if(credential.type === 'private-key'){
-            // if the credential type is a private-key, then read the file and decrypt the passphrase
-            
-            // read the privbate file
-            const privateKey = await fs.readFile(
+        if (credential.type === 'password') {
+            config.password = encryptor_service.tryDecrypt(
+                credential.secret
+            );
+        } else if (credential.type === 'private-key') {
+            config.privateKey = await fs.readFile(
                 credential.secret
             );
 
-            // store the private key in config
-            config.privateKey = privateKey;
-
-            if(credential.passphrase){
-                // decrypt and store the passpharse in config
-                config.passphrase = encryptor_service.tryDecrypt(credential.passphrase);
+            if (credential.passphrase) {
+                config.passphrase = encryptor_service.tryDecrypt(
+                    credential.passphrase
+                );
             }
-
         } else {
-
             throw new AppException(
                 `Unsupported credential type: ${credential.type}`,
                 HTTP_STATUS.HTTP_400_BAD_REQUEST
             );
-
         }
 
-        const startedAt = Date.now();
+        return config;
+    }
 
+    connect(config) {
         return new Promise((resolve, reject) => {
-
-            // create a new client object of ssh2
             const client = new Client();
 
             client
-                .on('ready', () => {
-
-                    const duration = Date.now() - startedAt;
-
-                    client.end();
-
-                    resolve({
-                        success: true,
-                        duration,
-                    });
-
+                .once('ready', () => {
+                    resolve(client);
                 })
-                .on('error', (e) => {
-
-                    reject(e);
-
+                .once('error', error => {
+                    reject(error);
                 })
                 .connect(config);
-
         });
+    }
 
+    // function to test connection
+    async testConnection(inventory, credential) {
+        let presentedFingerprint = null;
 
+        const hostVerifier = key => {
+            presentedFingerprint = getFingerprint(key);
+
+            if (!inventory.ssh_host_key_fingerprint) {
+                return false;
+            }
+
+            return (
+                presentedFingerprint ===
+                inventory.ssh_host_key_fingerprint
+            );
+        };
+
+        const config = await this.buildConfig(
+            inventory,
+            credential,
+            hostVerifier
+        );
+
+        const startedAt = Date.now();
+
+        try {
+            const client = await this.connect(config);
+
+            const duration = Date.now() - startedAt;
+
+            client.end();
+
+            return {
+                success: true,
+                duration,
+                startedAt
+            };
+        } catch (error) {
+            if (!inventory.ssh_host_key_fingerprint) {
+                throw {
+                    code: 'HOST_KEY_NOT_TRUSTED',
+                    message: 'SSH host key has not been trusted yet.',
+                    fingerprint: presentedFingerprint,
+                };
+            }
+
+            if (
+                presentedFingerprint &&
+                presentedFingerprint !==
+                    inventory.ssh_host_key_fingerprint
+            ) {
+                throw {
+                    code: 'HOST_KEY_MISMATCH',
+                    message:
+                        'SSH host key does not match the trusted fingerprint.',
+                    expected:
+                        inventory.ssh_host_key_fingerprint,
+                    received: presentedFingerprint,
+                };
+            }
+
+            throw {
+                code: 'SSH_CONNECTION_FAILED',
+                error,
+            };
+        }
+    }
+
+    // function to get fingerprint in case of a new server in inventory
+    async getHostKeyFingerprint(inventory, credential) {
+        let fingerprint = null;
+
+        const hostVerifier = key => {
+            fingerprint = getFingerprint(key);
+
+            // Only used for discovering the host fingerprint.
+            return true;
+        };
+
+        const config = await this.buildConfig(
+            inventory,
+            credential,
+            hostVerifier
+        );
+
+        try {
+            const client = await this.connect(config);
+
+            client.end();
+
+            return {
+                fingerprint,
+            };
+        } catch (error) {
+            throw {
+                code: 'SSH_CONNECTION_FAILED',
+                error,
+                fingerprint,
+            };
+        }
     }
 }
 

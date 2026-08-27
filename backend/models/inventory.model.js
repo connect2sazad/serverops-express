@@ -54,6 +54,11 @@ const Inventory = sequelize.define(
             allowNull: true
         },
 
+        ssh_host_key_fingerprint: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+
         creator_id: {
             type: DataTypes.INTEGER,
             allowNull: false,

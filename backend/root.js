@@ -9,8 +9,16 @@ import authRouter from './routes/auth.route.js';
 import userRolesRouter from './routes/user-roles.route.js';
 import inventoriesRouter from './routes/inventories.route.js';
 import credentialsRouter from './routes/credentials.route.js';
+import HTTP_STATUS from "./exceptions/status_codes.js";
 
 const router = express.Router();
+
+router.get('/', (req, res, next) => {
+    res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+        status: true,
+        message: 'Working!!'
+    });
+});
 
 // attach all routers
 // health router

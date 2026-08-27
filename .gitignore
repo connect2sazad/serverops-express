@@ -7,3 +7,5 @@ multer-info.md
 */storage/uploads/*
 
 !.gitkeep
+
+*.pdf

@@ -54,6 +54,88 @@ export class InventoryController extends BaseController {
         }
     }
 
+    async hostKey(req, res, next) {
+
+        try {
+
+            const { id } = req.params
+
+            const inventory = await Inventory.findOne({
+                where: {
+                    id,
+                    deleted_at: null
+                }
+            });
+
+            res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+                success: true,
+                message: "connection successfull",
+                data: {
+                    host_key: inventory.ssh_host_key_fingerprint
+                }
+            });
+
+        } catch (e) {
+            next(e);
+        }
+
+    }
+
+    async hostKeyTrust(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const inventory = await Inventory.findOne({
+                where: {
+                    id,
+                    deleted_at: null,
+                },
+            });
+
+            if (!inventory) {
+                throw new AppException(
+                    'Inventory not found',
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
+            const credential = await Credential.findOne({
+                where: {
+                    inventory_id: inventory.id,
+                    deleted_at: null,
+                },
+            });
+
+            if (!credential) {
+                throw new AppException(
+                    'No credential found for this inventory',
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
+            const connection = await ssh_service.getHostKeyFingerprint(
+                inventory,
+                credential
+            );
+
+            inventory.ssh_host_key_fingerprint = connection.fingerprint;
+            await inventory.save();
+
+            return res
+                .status(HTTP_STATUS.HTTP_200_OK.status_code)
+                .json({
+                    success: true,
+                    message: 'SSH host key trusted successfully',
+                    data: {
+                        fingerprint: connection.fingerprint,
+                    },
+                });
+        } catch (e) {
+            next(e);
+        }
+    }
+
+
     async testConnection(req, res, next) {
 
         try {
@@ -77,6 +159,13 @@ export class InventoryController extends BaseController {
             const connection = await ssh_service.testConnection(
                 inventory, credential
             );
+
+            // get the connection details
+            inventory.connection_status = 'disconnected';
+            inventory.last_connected_at = connection.startedAt;
+
+            // save the details in db
+            await inventory.save();
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,

@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export const multipliers = {
     B: 1,
     K: 1024,
@@ -22,3 +24,12 @@ export const parseMemorySize = (value) => {
 
     return amount * multipliers[unit];
 };
+
+export const getFingerprint = (key) => {
+
+    return `SHA256:${crypto
+        .createHash('sha256')
+        .update(key)
+        .digest('base64')}`;
+
+}

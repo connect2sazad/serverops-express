@@ -22,6 +22,8 @@ const INVENTORY_ID_REMOVE_TAGS = PREFIX + '/:id/tags/remove';
 const INVENTORY_ID_CREDENTIALS = PREFIX + '/:id/credentials';
 
 // string routes for ssh
+const INVENTORY_ID_HOST_KEY = PREFIX + '/:id/host-key';
+const INVENTORY_ID_HOST_KEY_TRUST = PREFIX + '/:id/host-key/trust';
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
 
 // get all inventories
@@ -110,6 +112,16 @@ router.get(INVENTORY_ID_CREDENTIALS, authenticate, async (req, res, next) => {
 });
 
 // ================================SSH================================
+// host key
+router.get(INVENTORY_ID_HOST_KEY, authenticate, async (req, res, next) => {
+  await inventory_controller.hostKey(req, res, next);
+});
+
+// host key trust
+router.get(INVENTORY_ID_HOST_KEY_TRUST, authenticate, async (req, res, next) => {
+  await inventory_controller.hostKeyTrust(req, res, next);
+});
+
 // test ssh connection
 router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, async (req, res, next) => {
   await inventory_controller.testConnection(req, res, next);
