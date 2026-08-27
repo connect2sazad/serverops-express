@@ -22,6 +22,38 @@ export class InventoryController extends BaseController {
         });
     }
 
+    async inventoryCredentials(req, res, next) {
+        try {
+
+            const { id } = req.params
+
+            const inventory = await Inventory.findOne({
+                where: {
+                    id,
+                    deleted_at: null
+                }
+            });
+
+            const credentials = await Credential.findAll({
+                where: {
+                    inventory_id: inventory.id,
+                    deleted_at: null
+                }
+            });
+
+            res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+                success: true,
+                message: "connection successfull",
+                data: {
+                    credentials
+                }
+            });
+
+        } catch (e) {
+            next(e);
+        }
+    }
+
     async testConnection(req, res, next) {
 
         try {

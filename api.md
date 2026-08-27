@@ -76,6 +76,8 @@
 >|   **DELETE**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1    |  None |
 >|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/remarks/remove    |  None |
 >|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/tags/remove    |  None |
+>|   **ALL CREDENTIALS**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/credentials    |  None |
+>|   **TEST CONNECTION**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/test-connection    |  None |
 
 ## Credentials
 >|   Action |    Request Type    |   Link    |   Request Body    |

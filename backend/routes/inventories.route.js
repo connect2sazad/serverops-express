@@ -18,6 +18,8 @@ const INVENTORY_ID_TAGS = PREFIX + '/:id/tags';
 const INVENTORY_ID_REMOVE_REMARKS = PREFIX + '/:id/remarks/remove';
 const INVENTORY_ID_REMOVE_TAGS = PREFIX + '/:id/tags/remove';
 
+// string routes fore credentials
+const INVENTORY_ID_CREDENTIALS = PREFIX + '/:id/credentials';
 
 // string routes for ssh
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
@@ -99,6 +101,12 @@ router.delete(INVENTORY_ID_REMOVE_TAGS, authenticate, async (req, res, next) => 
 
     await inventory_controller.removeTags(req, res, next);
 
+});
+
+// ================================Credentials================================
+// show all associated credentials
+router.get(INVENTORY_ID_CREDENTIALS, authenticate, async (req, res, next) => {
+  await inventory_controller.inventoryCredentials(req, res, next);
 });
 
 // ================================SSH================================
