@@ -57,6 +57,8 @@ export class CommandController extends BaseController {
             inventory.connection_status = 'disconnected';
             inventory.last_connected_at = connection.metadata.startedAt;
 
+            const message = `command executed${connection.commandStatus==="success" ? ' successfully' : '' }`
+
             // save the details in db
             await inventory.save();
 
@@ -75,6 +77,9 @@ export class CommandController extends BaseController {
 
                 duration: connection.metadata.duration,
 
+                remarks: message,
+                tags: ["command", inventory.hostname, credential.username, message],
+
                 started_at: new Date(connection.metadata.startedAt),
                 finished_at: new Date(
                     connection.metadata.startedAt + connection.metadata.duration
@@ -83,7 +88,7 @@ export class CommandController extends BaseController {
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,
-                message: `command executed${connection.commandStatus==="success" ? ' successfully' : '' }`,
+                message,
                 data: {
                     connection
                 }

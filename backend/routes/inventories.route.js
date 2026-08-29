@@ -12,7 +12,7 @@ const PREFIX = '/inventories';
 
 // string routes
 const INVENTORIES = PREFIX;
-const INVENTORY_ID = PREFIX + '/:id';
+export const INVENTORY_ID = PREFIX + '/:id'; // exporting INVENTORY_ID to use in services route
 const INVENTORY_ID_ENABLE = PREFIX + '/:id/enable';
 const INVENTORY_ID_DISABLE = PREFIX + '/:id/disable';
 const INVENTORY_ID_REMARKS = PREFIX + '/:id/remarks';

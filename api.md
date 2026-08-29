@@ -88,6 +88,7 @@
 >|   **HOST KEY TRUST**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key/trust    |  None |
 >|   **TEST CONNECTION**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/test-connection    |  None |
 >|   **DISCOVER**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/discover    |  None |
+>|   **COMMAND**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/inventories/6/command    |  [JSON](#command) |
 
 ## Credentials
 >|   Action |    Request Type    |   Link    |   Request Body    |
@@ -104,6 +105,12 @@
 >|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/credentials/1/remarks/remove    |  None |
 >|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/credentials/1/tags/remove    |  None |
 
+
+## Command Executions
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/command-executions    |  None |
+>|   **VIEW**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/command-executions/1    |  None |
 
 
 # JSON:
@@ -165,6 +172,12 @@
     "username": "ubuntu",
     "type": "password",
     "secret": "abc123"
+}
+```
+## Command
+```
+{
+    "command": "pwd"
 }
 ```
 ---

@@ -23,7 +23,7 @@ export const CommandExecutionResponseSchema = BaseSchema.extend({
     stdout: z.string().nullable(),
     stderr: z.string().nullable(),
 
-    exit_code: z.coerce.number().int().optional(),
+    exit_code: z.coerce.number().int().nullable().optional(),
 
     command_status: z.enum(['success', 'failed', 'timeout']),
 
@@ -31,6 +31,9 @@ export const CommandExecutionResponseSchema = BaseSchema.extend({
 
     started_at: z.coerce.date(),
     finished_at: z.coerce.date(),
+
+    remarks: z.string().nullable().optional(),
+    tags: z.json().nullable().optional(),
 
     inventory: InventorySchema.optional(),
     credential: CredentialSchema.optional(),
