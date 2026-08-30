@@ -11,6 +11,7 @@ const PREFIX = '/users';
 // string routes
 const USERS = PREFIX;
 const USER_ID = PREFIX + '/:id';
+const USER_SELF = PREFIX + '/self';
 const USER_ID_ENABLE = PREFIX + '/:id/enable';
 const USER_ID_DISABLE = PREFIX + '/:id/disable';
 const USER_ID_REMARKS = PREFIX + '/:id/remarks';
@@ -22,6 +23,13 @@ const USER_ID_REMOVE_TAGS = PREFIX + '/:id/tags/remove';
 router.get(USERS, authenticate, async (req, res, next) => {
 
   await user_controller.get(req, res, next);
+
+});
+
+// get current user details
+router.get(USER_SELF, authenticate, async (req, res, next) => {
+
+  await user_controller.self(req, res, next);
 
 });
 

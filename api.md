@@ -30,6 +30,7 @@
 >|----------|--------------------|-----------|-------------------|
 >|   **LOGIN**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/auth/    |  [JSON](#login) |
 >|   **LOGIN**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/auth/login    |  [JSON](#login) |
+>|   **LOGOUT**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/auth/logout    |  None |
 >|   **REGISTER**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/auth/register    |  [JSON](#createupdateset-remarksset-tags) |
 >|   **FORGOT PASSWORD**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/auth/forgot-password    |  [JSON](#.) |
 >|   **RESET PASSWORD**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/auth/reset-password    |  [JSON](#.) |

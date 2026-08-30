@@ -191,7 +191,8 @@ export class AuthController {
                     HTTP_STATUS.HTTP_200_OK.status_code
                 ).json({
                     status: true,
-                    message: "Logout Successful!"
+                    message: "Logout Successful!",
+                    data: "Logout Successful!"
                 });
             }
 

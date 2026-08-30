@@ -1,6 +1,7 @@
 import BaseController from './base.controller.js';
 import { User, UserRole } from '../models/index.js';
 import { UserSchema } from '../schemas/user.schema.js';
+import HTTP_STATUS from '../exceptions/status_codes.js';
 
 export class UserController extends BaseController {
 
@@ -20,6 +21,33 @@ export class UserController extends BaseController {
         super(User, settings);
     }
 
+    async self(req, res, next) {
+        try {
+
+            const { id } = req.auth;
+
+            const user = await User.findByPk(id);
+
+            if (!user) {
+                throw new AppException(
+                    `User not found!`,
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
+            return res.status(
+                HTTP_STATUS.HTTP_200_OK.status_code
+            ).json({
+                status: true,
+                message: `User details fetched successfully.`,
+                data: this.serialize(user, UserSchema),
+            });
+
+
+        } catch (e) {
+            next(e);
+        }
+    }
 
 }
 

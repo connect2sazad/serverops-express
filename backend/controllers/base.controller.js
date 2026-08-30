@@ -134,7 +134,7 @@ class BaseController {
                 status: true,
                 message: `${this.model.name} created successfully.`,
                 data: this.serialize(record, this.createSchema),
-            })
+            });
 
         } catch (error) {
             next(error);

@@ -101,6 +101,29 @@ class ServiceController {
 
     async service_action(req, res, next, action) {
 
+        const messages = {
+            start: {
+                success: 'Service started successfully!',
+                failed: 'Service start failed!',
+            },
+            stop: {
+                success: 'Service stopped successfully!',
+                failed: 'Service stop failed!',
+            },
+            restart: {
+                success: 'Service restarted successfully!',
+                failed: 'Service restart failed!',
+            },
+            enable: {
+                success: 'Service enabled successfully!',
+                failed: 'Service enable failed!',
+            },
+            disable: {
+                success: 'Service disabled successfully!',
+                failed: 'Service disable failed!',
+            },
+        };
+
         try {
 
             const { id, service } = req.params;
@@ -116,11 +139,12 @@ class ServiceController {
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
             inventory.last_connected_at = result.metadata.startedAt;
-            
+            await inventory.save();
+
             const message =
-                    result.commandStatus === 'success'
-                        ? `Service ${action}-ed successfully!`
-                        : `Service ${action} failed!`;
+                result.commandStatus === 'success'
+                    ? messages[action].success
+                    : messages[action].failed;
 
 
             // save the command

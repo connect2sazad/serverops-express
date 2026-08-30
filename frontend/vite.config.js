@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
 
     // Configure the Vite development server.
     server: {
+      host: '0.0.0.0',
 
       // Set the development server port using VITE_PORT from .env.
       // Example: VITE_PORT=3000 → port 3000.
