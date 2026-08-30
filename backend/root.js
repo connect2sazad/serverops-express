@@ -11,6 +11,7 @@ import inventoriesRouter from './routes/inventories.route.js';
 import credentialsRouter from './routes/credentials.route.js';
 import commandExecutionsRouter from './routes/command-executions.route.js';
 import servicesRouter from './routes/services.route.js';
+import processesRouter from './routes/processes.route.js';
 import HTTP_STATUS from "./exceptions/status_codes.js";
 
 const router = express.Router();
@@ -39,5 +40,7 @@ router.use(API_PREFIX, credentialsRouter);
 router.use(API_PREFIX, commandExecutionsRouter);
 // services running in invetory router
 router.use(API_PREFIX, servicesRouter);
+// processes running in invetory router
+router.use(API_PREFIX, processesRouter);
 
 export default router;

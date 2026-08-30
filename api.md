@@ -18,6 +18,11 @@
 
 # Backend
 
+## Home
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **HOME**    |   ``GET``   |   http://127.0.0.1:3100/    |  None |
+
 ## Health
 >|   Action |    Request Type    |   Link    |   Request Body    |
 >|----------|--------------------|-----------|-------------------|
@@ -41,8 +46,8 @@
 >|   Action |    Request Type    |   Link    |   Request Body    |
 >|----------|--------------------|-----------|-------------------|
 >|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/users    |  None |
+>|   **SELF VIEW**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/users/self    |  None |
 >|   **VIEW**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/users/4    |  None |
->|   **CREATE**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/users    | [JSON](#createupdateset-remarksset-tags) |
 >|   **UPDATE**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/users/4    | [JSON](#createupdateset-remarksset-tags) |
 >|   **ENABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/users/4/enable    |   None |
 >|   **DISABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/users/4/disable    |  None |
@@ -112,6 +117,25 @@
 >|----------|--------------------|-----------|-------------------|
 >|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/command-executions    |  None |
 >|   **VIEW**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/command-executions/1    |  None |
+
+## Services
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/services    |  None |
+>|   **VIEW**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/services/nginx    |  None |
+>|   **START SERVICE**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/nginx/start    |  None |
+>|   **STOP SERVICE**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/nginx/stop    |  None |
+>|   **RESTART SERVICE**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/nginx/restart    |  None |
+>|   **ENABLE SERVICE**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/nginx/enable    |  None |
+>|   **DISABLE SERVICE**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/nginx/disable    |  None |
+
+## Processes
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/processes    |  None |
+>|   **VIEW**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/processes/295    |  None |
+>|   **TERMINATE PROCESS**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/295/terminate    |  None |
+>|   **FORCE KILL PROCESS**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/295/kill    |  None |
 
 
 # JSON:
