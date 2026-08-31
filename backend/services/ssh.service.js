@@ -21,14 +21,14 @@ class SSHService {
         if (!inventory.status || !credential.status) {
             throw new AppException(
                 "SSH access is disabled for this inventory or credential!",
-                HTTP_STATUS.HTTP_404_NOT_FOUND
+                HTTP_STATUS.HTTP_403_FORBIDDEN
             );
         }
 
         if (credential.inventory_id !== inventory.id) {
             throw new AppException(
                 "Credential does not belong to this inventory!",
-                HTTP_STATUS.HTTP_404_NOT_FOUND
+                HTTP_STATUS.HTTP_400_BAD_REQUEST
             );
         }
 

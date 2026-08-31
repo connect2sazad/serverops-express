@@ -25,6 +25,7 @@ export const ALLOWED_ORIGINS = getRequiredEnv('ALLOWED_ORIGINS', true);
 export const MAX_FILE_UPLOAD_SIZE = parseMemorySize(process.env.MAX_FILE_UPLOAD_SIZE || '5M');
 export const FILE_UPLOAD_DIR = process.env.FILE_UPLOAD_DIR || 'storage/uploads';
 export const ENCRYPTION_ALGORITHM = process.env.ENCRYPTION_ALGORITHM || 'aes-256-gcm';
+export const LOGIN_LIMIT = process.env.LOGIN_LIMIT || 10;
 export const ENCRYPTION_KEY = Buffer.from(getRequiredEnv('ENCRYPTION_KEY'), 'base64');
 
 // if encryption key is not 32

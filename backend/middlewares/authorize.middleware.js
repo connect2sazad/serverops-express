@@ -4,7 +4,7 @@ import { UserRole } from "../models/index.js";
 
 export const authorizeRoles = (...allowedRoles) => {
 
-    return async (req, resizeBy, next) => {
+    return async (req, res, next) => {
 
         try {
 
@@ -20,7 +20,7 @@ export const authorizeRoles = (...allowedRoles) => {
             if(!role || !role.status || !allowedRoles.includes(role.slug)){
                 throw new AppException(
                     "You do not have permission to perform this action!",
-                    HTTP_STATUS.HTTP_401_UNAUTHORIZED
+                    HTTP_STATUS.HTTP_403_FORBIDDEN
                 );
             }
 

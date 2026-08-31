@@ -138,8 +138,8 @@ router.get(INVENTORY_ID_DISCOVER, authenticate, authorizeRoles('admin'), async (
 });
 
 // command
-router.post(INVENTORY_ID_COMMAND, authenticate, authorizeRoles('admin'), validate(CommandExecutionSchema), async (req, res, next) => {
-  await command_controller.execute(req, res, next);
-});
+// router.post(INVENTORY_ID_COMMAND, authenticate, authorizeRoles('admin'), validate(CommandExecutionSchema), async (req, res, next) => {
+//   await command_controller.execute(req, res, next);
+// });
 
 export default router;

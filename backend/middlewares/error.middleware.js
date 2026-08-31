@@ -31,7 +31,7 @@ const errorHandler = (error, req, res, next) => {
             ? 'INVALID_JSON'
             : isPublicError
                 ? error.code
-                : 'INTERNAL_SERVER_ERROR';
+                : 'INTERNAL_SERVER_ERROR',
 
         message: isInvalidJson
             ? 'Request body contains invalid JSON,'

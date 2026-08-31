@@ -57,7 +57,7 @@ export class InventoryController extends BaseController {
                 message: "Credentials related to inventory retrieved successfully",
                 data: {
                     credentials: credentials.map(credential => 
-                        CredentialSchema.safeParse(credential.toJSON())
+                        CredentialSchema.parse(credential.toJSON())
                     )
                 }
             });
