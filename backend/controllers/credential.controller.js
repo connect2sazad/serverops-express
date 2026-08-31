@@ -36,7 +36,7 @@ class CredentialController extends BaseController {
             const data = this.createSchema.parse(req.body);
 
             let secret = data.secret ?? null;
-            let passphrase = data.passphrase ?? null;
+            let passphrase = null;
 
             // if type is password, then encrypt the password before storing it in db
             if (data.type === 'password') {
@@ -52,6 +52,13 @@ class CredentialController extends BaseController {
 
             // if type is private-key, then store the private-key path
             if (data.type === 'private-key') {
+
+                if (data.secret !== undefined) {
+                    throw new AppException(
+                        'Please upload a private_key instead of supplying secret!',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
 
                 if (!req.file) {
                     throw new AppException(
@@ -118,24 +125,27 @@ class CredentialController extends BaseController {
                 ...data,
             };
 
-            console.log("data.type: ", data.type);
-            
 
             // if type is not provided in data, get it from existing credential data
-            if(!data.type){
+            if (!data.type) {
                 data.type = credential.type;
             }
 
             // if type is password, then encrypt the password before storing it in db
             if (data.type === 'password') {
-                if (!data.secret) {
+
+                // if secret is not provided but the type is changed to password
+                if (credential.type !== 'password' && !data.secret) {
                     throw new AppException(
-                        'Password is required!',
+                        'Password is required when switching credential type!',
                         HTTP_STATUS.HTTP_400_BAD_REQUEST
                     );
                 }
 
-                updateData.secret = encryptor_service.encrypt(data.secret);
+                // replace existing password
+                if(data.secret !== undefined){
+                    updateData.secret = encryptor_service.encrypt(data.secret);
+                }
                 // set the passphrase to null
                 updateData.passphrase = null;
             }
@@ -144,13 +154,34 @@ class CredentialController extends BaseController {
             // replace the secret with the new file path.
             if (data.type === 'private-key') {
 
+                //  provide a private key file instead of secret
+                if (data.secret !== undefined) {
+                    throw new AppException(
+                        'Please upload a private_key instead of supplying secret!',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
+
+                // checking if there is a private key file not uploaded and db has type password
+                if(credential.type !== 'private-key' && !req.file){
+                    throw new AppException(
+                        'A private key file is required when switching credential type.',
+                        HTTP_STATUS.HTTP_400_BAD_REQUEST
+                    );
+                }
+
+                // delete secret to store the private key path
+                delete updateData.secret;
+
                 if (req.file) {
                     updateData.secret = req.file.path;
                 }
 
                 // encrypt the passphrase
-                if (data.passphrase) {
-                    updateData.passphrase = encryptor_service.encrypt(data.passphrase);
+                if (data.passphrase !== undefined) {
+                    updateData.passphrase = data.passphrase
+                        ? encryptor_service.encrypt(data.passphrase)
+                        : null;
                 }
 
             }

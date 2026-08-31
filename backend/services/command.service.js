@@ -17,8 +17,6 @@ class CommandService {
             const result =
                 await ssh_service.executeCommandOnConnection(client, command);
 
-            const duration = getDuration(startedAt);
-
             const status = result.exitCode === 0 ? 'success' : 'failed';
 
             return {
@@ -28,7 +26,7 @@ class CommandService {
                 commandStatus: status,
                 metadata: {
                     startedAt,
-                    duration
+                    duration: getDuration(startedAt),
                 }
             }
 
@@ -42,10 +40,11 @@ class CommandService {
                     commandStatus: 'timeout',
                     metadata: {
                         startedAt,
-                        duration: 30000,
+                        duration: getDuration(startedAt),
                     },
                 };
             }
+            throw error;
         } finally {
             client.end()
         }

@@ -1,5 +1,6 @@
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
+import { PaginationSchema } from '../schemas/pagination.schema.js';
 
 class BaseController {
 
@@ -74,22 +75,86 @@ class BaseController {
             }
 
             // get all the records
-            const records = await this.model.findAll({
-                order: [
-                    ['id', 'DESC']
-                ],
-            });
+            return await this.getAllPaginatedRecords(req, res, next);
+            // const records = await this.model.findAll({
+            //     order: [
+            //         ['id', 'DESC']
+            //     ],
+            // });
 
-            return res.status(
-                HTTP_STATUS.HTTP_200_OK.status_code
-            ).json({
-                success: true,
-                message: `${this.model.name}s retrieved successfully.`,
-                data: this.serializeMany(records),
-            })
+            // return res.status(
+            //     HTTP_STATUS.HTTP_200_OK.status_code
+            // ).json({
+            //     success: true,
+            //     message: `${this.model.name}s retrieved successfully.`,
+            //     data: this.serializeMany(records),
+            // })
 
         } catch (error) {
             next(error);
+        }
+
+    }
+
+    async getAllPaginatedRecords(req, res, next) {
+
+        try {
+
+            // validate pagination query parameters
+            const validation = PaginationSchema.safeParse(req.query);
+
+            if (!validation.success) {
+                throw new AppException(
+                    "Invalid Pagination Parameters",
+                    HTTP_STATUS.HTTP_422_UNPROCESSABLE_ENTITY,
+                    {
+                        errors: validation.error.issues.map(issue => ({
+                            field: issue.path.join('.'),
+                            message: issue.message
+                        })),
+                    }
+                );
+            }
+
+            const { page, page_size } = validation.data;
+
+            // get offset/no of records to skip
+            const offset = (page - 1) * page_size;
+
+            if (!Number.isSafeInteger(offset)) {
+                throw new AppException(
+                    "Page number is too large.",
+                    HTTP_STATUS.HTTP_422_UNPROCESSABLE_ENTITY
+                );
+            }
+
+            // retrieve this page & count all matching records
+            const { count, rows } = await this.model.findAndCountAll({
+                order: [
+                    ['id', 'DESC']
+                ],
+                limit: page_size,
+                offset
+            });
+
+            const totalPages = Math.ceil(count / page_size);
+
+            return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+                status: true,
+                message: `All data related to ${this.model.name} retrieved successfully.`,
+                data: this.serializeMany(rows),
+                pagination: {
+                    page,
+                    page_size,
+                    total: count,
+                    total_pages: totalPages,
+                    has_next_page: page < totalPages,
+                    has_previous_page: page > 1 && totalPages > 0,
+                }
+            });
+
+        } catch (e) {
+            next(e);
         }
 
     }
@@ -133,7 +198,7 @@ class BaseController {
             ).json({
                 status: true,
                 message: `${this.model.name} created successfully.`,
-                data: this.serialize(record, this.createSchema),
+                data: this.serialize(record),
             });
 
         } catch (error) {

@@ -1,7 +1,7 @@
 import express from 'express';
 
-import DBPOOL from '../config/database.js';
-import { JWT_SECRET_KEY, PROJECT_NAME, PROJECT_VERSION } from '../config/config.js';
+import sequelize from '../config/sequelize.js';
+import { PROJECT_NAME, PROJECT_VERSION } from '../config/config.js';
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 
@@ -30,7 +30,7 @@ router.get(READY, async (req, res) => {
     try {
 
         // send a test query to check if the app is able to fetch data from db
-        await DBPOOL.execute("SELECT 1");
+        await sequelize.authenticate();
 
         // return with success
         return res.status(200).json({

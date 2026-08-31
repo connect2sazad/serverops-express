@@ -106,18 +106,10 @@ export class AuthController {
             });
 
             // user not found
-            if (!user) {
+            if (!user || !user.status) {
                 throw new AppException(
-                    `No such user with userid '${userid}' found!`,
-                    HTTP_STATUS.HTTP_404_NOT_FOUND
-                );
-            }
-
-            // check whether user is disabled
-            if (!user.status) {
-                throw new AppException(
-                    `Userid '${userid}' has been disabled!`,
-                    HTTP_STATUS.HTTP_401_UNAUTHORIZED,
+                    'Invalid userid or password.',
+                    HTTP_STATUS.HTTP_401_UNAUTHORIZED
                 );
             }
 
@@ -174,7 +166,7 @@ export class AuthController {
                 },
             });
 
-            if(!existingToken){
+            if (!existingToken) {
 
                 // jwt expiration timestamp
                 const expiresAt = new Date(

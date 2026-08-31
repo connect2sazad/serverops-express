@@ -10,6 +10,28 @@ class SSHService {
 
     // reusable func to genrate config
     async buildConfig(inventory, credential, hostVerifier) {
+
+        if (!inventory || !credential) {
+            throw new AppException(
+                "Inventory or Credential not found!",
+                HTTP_STATUS.HTTP_404_NOT_FOUND
+            );
+        }
+
+        if (!inventory.status || !credential.status) {
+            throw new AppException(
+                "SSH access is disabled for this inventory or credential!",
+                HTTP_STATUS.HTTP_404_NOT_FOUND
+            );
+        }
+
+        if (credential.inventory_id !== inventory.id) {
+            throw new AppException(
+                "Credential does not belong to this inventory!",
+                HTTP_STATUS.HTTP_404_NOT_FOUND
+            );
+        }
+
         const config = {
             host: inventory.hostname,
             port: inventory.ssh_port ?? 22,

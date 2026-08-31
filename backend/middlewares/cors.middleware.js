@@ -1,6 +1,8 @@
 import cors from 'cors';
 
 import { ALLOWED_ORIGINS } from '../config/config.js';
+import AppException from '../exceptions/exception.js';
+import HTTP_STATUS from '../exceptions/status_codes.js';
 
 const allowedOrigins = ALLOWED_ORIGINS
     .split(',')

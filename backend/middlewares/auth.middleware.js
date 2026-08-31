@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
-import { TokenBlacklist } from '../models/index.js';
+import { TokenBlacklist, User } from '../models/index.js';
 
 import { JWT_EXPIRES_IN, JWT_SECRET_KEY } from '../config/config.js';
 
@@ -46,6 +46,18 @@ export const authenticate = async (req, res, next) => {
                 HTTP_STATUS.HTTP_401_UNAUTHORIZED
             );
         }
+
+        // check the current account user
+        const user = await User.findByPk(decoded.id);
+
+        if(!user || !user.status){
+            throw new AppException(
+                "Your account is unavailable or disabled",
+                HTTP_STATUS.HTTP_401_UNAUTHORIZED
+            );
+        }
+
+        req.user = user;
 
         // store authenticated user
         req.auth = decoded;

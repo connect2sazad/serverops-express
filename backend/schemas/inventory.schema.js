@@ -9,10 +9,10 @@ export const InventorySchema = BaseSchema.extend({
     hostname: z.string(),
     ssh_port: z.number().int(),
     environment: z.string(),
-    operating_system: z.string(),
-    description: z.string(),
+    operating_system: z.string().nullable(),
+    description: z.string().nullable(),
     connection_status: z.string(),
-    last_connected_at: z.coerce.date(),
+    last_connected_at: z.coerce.date().nullable(),
     creator: UserSchema.optional(),
 
 });
@@ -20,7 +20,7 @@ export const InventorySchema = BaseSchema.extend({
 // Inventory creation schema
 export const InventoryCreateSchema = z.object({
 
-    name: z.string().min(3).max(100).optional(),
+    name: z.string().trim().min(3).max(100),
     hostname: z.string().min(1).max(100),
     ssh_port: z.number().int().min(1).max(65535).default(22),
     environment: z.string().min(1).max(100),

@@ -1,6 +1,7 @@
 import BaseController from './base.controller.js';
 import { User, UserRole } from '../models/index.js';
 import { UserSchema } from '../schemas/user.schema.js';
+import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 
 export class UserController extends BaseController {
@@ -26,7 +27,14 @@ export class UserController extends BaseController {
 
             const { id } = req.auth;
 
-            const user = await User.findByPk(id);
+            const user = await User.findByPk(id, {
+                include: [
+                    {
+                        model: UserRole,
+                        as: 'role',
+                    }
+                ]
+            });
 
             if (!user) {
                 throw new AppException(

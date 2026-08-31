@@ -6,6 +6,7 @@ import HTTP_STATUS from '../exceptions/status_codes.js';
 import ssh_service from '../services/ssh.service.js';
 import discovery_service from '../services/discovery.service.js';
 import command_service from '../services/command.service.js';
+import AppException from '../exceptions/exception.js';
 
 export class InventoryController extends BaseController {
 
@@ -37,6 +38,13 @@ export class InventoryController extends BaseController {
                 }
             });
 
+            if(!inventory){
+                throw new AppException(
+                    "Inventory Not found!",
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
+
             const credentials = await Credential.findAll({
                 where: {
                     inventory_id: inventory.id,
@@ -46,9 +54,11 @@ export class InventoryController extends BaseController {
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,
-                message: "connection successfull",
+                message: "Credentials related to inventory retrieved successfully",
                 data: {
-                    credentials
+                    credentials: credentials.map(credential => 
+                        CredentialSchema.safeParse(credential.toJSON())
+                    )
                 }
             });
 
