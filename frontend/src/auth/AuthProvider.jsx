@@ -13,12 +13,14 @@ import {
 import { onSessionExpired } from './authEvents';
 
 import { AuthContext } from './AuthContext';
+import AppException from '../exceptions/exception.js';
+import HTTP_STATUS from '../exceptions/status_codes.js';
 
 export default function AuthProvider({ children }) {
 
     // const to store user & initialization
     const [user, setUser] = useState(null);
-    const [initializing, setInitializing] = useState(false);
+    const [initializing, setInitializing] = useState(true);
 
     useEffect(() => {
 
@@ -59,16 +61,21 @@ export default function AuthProvider({ children }) {
             clearAccessToken();
             setUser(null);
         });
-    });
+    }, []);
 
     const login = useCallback(
 
-        async (username, password) => {
+        async (userid, password) => {
 
             // get token details by makeing a login request
-            const tokenData = await loginRequest(username, password);
+            const tokenData = await loginRequest(userid, password);
+
+            if (!tokenData) {
+                throw new AppException("No access token received from server.", HTTP_STATUS.HTTP_401_UNAUTHORIZED);
+            }
+            
             // set access token received from tokenData
-            setAccessToken(tokenData.access_token);
+            setAccessToken(tokenData.token);
 
             try {
 
@@ -81,7 +88,7 @@ export default function AuthProvider({ children }) {
             } catch (e) {
                 clearAccessToken();
                 setUser(null);
-                throw error;
+                throw e;
             }
 
         }, []
@@ -90,9 +97,9 @@ export default function AuthProvider({ children }) {
 
     const logout = useCallback(
         async () => {
-            try{
+            try {
                 // if there is a access token, process the logout request
-                if(getAccessToken()){
+                if (getAccessToken()) {
                     await logoutRequest();
                 }
 
@@ -120,12 +127,12 @@ export default function AuthProvider({ children }) {
             logout,
             hasRole,
         }), [
-            user,
-            initializing,
-            login,
-            logout,
-            hasRole,
-        ]
+        user,
+        initializing,
+        login,
+        logout,
+        hasRole,
+    ]
     );
 
     return (

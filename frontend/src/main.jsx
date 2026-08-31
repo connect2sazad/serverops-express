@@ -5,16 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import AuthProvider from './auth/AuthProvider.jsx';
 
-// import "bootstrap/dist/css/bootstrap.min.css";
-// import "bootstrap-icons/font/bootstrap-icons.css";
-// import "./index.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "./index.css";
 
-// import App from './App.jsx'
+import App from './App.jsx'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 3,
       refetchOnWindowFocus: false,
     },
   },

@@ -31,7 +31,7 @@ apiClient.interceptors.request.use(
     e => Promise.reject(e)
 );
 
-apiClient.interceptors.request.use(
+apiClient.interceptors.response.use(
     response => response,
     e => {
         const status = e.response?.status;

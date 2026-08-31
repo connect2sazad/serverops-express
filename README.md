@@ -7,7 +7,8 @@
 |--------------|---------------|
 |   **Generate Secret Key**    |   ```node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"```   |
 |   **Generate Encryption Key**    |   ```node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"```   |
-|   **Start Backend**    |   ```npm run dev```   |
+|   **Start Frontend**    |   ```cd frontend && npm run dev```   |
+|   **Start Backend**    |   ```cd backend && npm run dev```   |
 |   **Create Migration**    |   ```npx sequelize-cli migration:generate --name migration-file-name-here-in-this-format```   |
 |   **Run Migration**    |   ```npx sequelize-cli db:migrate```   |
 |   **Create Seed**    |   ``` npx sequelize-cli seed:generate --name seeding-file-name-here-in-this-format```   |

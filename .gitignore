@@ -3,6 +3,7 @@
 *.zip
 */.env
 multer-info.md
+plan.md
 
 */storage/uploads/*
 
