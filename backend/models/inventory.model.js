@@ -59,6 +59,66 @@ const Inventory = sequelize.define(
             allowNull: true
         },
 
+        discovered_hostname: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+        },
+
+        os_name: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+        },
+
+        os_version: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
+
+        os_version_id: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+        },
+
+        kernel: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+        },
+
+        architecture: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+        },
+
+        cpu_cores: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+
+        memory_total_kib: {
+            type: DataTypes.BIGINT.UNSIGNED,
+            allowNull: true,
+        },
+
+        uptime_seconds: {
+            type: DataTypes.BIGINT.UNSIGNED,
+            allowNull: true,
+        },
+
+        inventory_collected_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+
+        inventory_partial: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+        },
+
+        inventory_missing_fields: {
+            type: DataTypes.JSON,
+            allowNull: true,
+        },
+
         creator_id: {
             type: DataTypes.INTEGER,
             allowNull: false,

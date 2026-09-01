@@ -37,3 +37,11 @@ export const getFingerprint = (key) => {
 export const getDuration = startedAt => {
     return Date.now() - startedAt;
 }
+
+export const parseNumber = value => {
+    if (value === undefined || value === '') return null;
+
+    const number = Number(value);
+
+    return Number.isFinite(number) && number >= 0 ? number : null;
+}

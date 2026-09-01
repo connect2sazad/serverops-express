@@ -16,7 +16,7 @@ const errorHandler = (error, req, res, next) => {
             ? error.statusCode
             : 500
 
-    const isPublicError = isAppError && statusCode < 500;
+    const isPublicError = isAppError && (statusCode < 500 || error.expose === true);
 
     // Do not log request bodies, tokens, or raw database errors.
     console.error({

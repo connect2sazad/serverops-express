@@ -13,6 +13,7 @@
 |   **Run Migration**    |   ```npx sequelize-cli db:migrate```   |
 |   **Create Seed**    |   ``` npx sequelize-cli seed:generate --name seeding-file-name-here-in-this-format```   |
 |   **Run Seeding**    |   ```npx sequelize-cli db:seed:all```   |
+|   **Generate Host Key on Linux Server to store in <u>inventories/1/host-key/trust</u>**    |   ```ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256```   |
 
 </div>
 
@@ -92,7 +93,7 @@
 >|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/tags/remove    |  None |
 >|   **ALL CREDENTIALS**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/credentials    |  None |
 >|   **HOST KEY**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key    |  None |
->|   **HOST KEY TRUST**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key/trust    |  None |
+>|   **HOST KEY TRUST**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/inventories/1/host-key/trust    |  [JSON](#host-key-trust) |
 >|   **TEST CONNECTION**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/test-connection    |  None |
 >|   **DISCOVER**    |   ``GET``   |   http://127.0.0.1:3100/api/v1/inventories/1/discover    |  None |
 >|   **COMMAND**    |   ``POST``   |   http://127.0.0.1:3100/api/v1/inventories/6/command    |  [JSON](#command) |
@@ -207,6 +208,20 @@
 }
 ```
 ---
+## Host Key Trust
+```
+{
+  "fingerprint": "THE_VERIFIED_SHA256_FINGERPRINT_HERE"
+}
+```
+
+
+> ### How to add a inventory to ServerOps?
+> - Login to your server and run the below command:<br/>
+> ```ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256```
+> - Copy the generated Key starting with ```SHA256:...```
+> - Update the inventory host-key trust link below and update with the [above json](#host-key-trust):<br/>
+>  **POST** ```http://127.0.0.1:3100/api/v1/inventories/1/host-key/trust```
 
 > ### MD Guide:
 > https://www.markdownguide.org/basic-syntax/

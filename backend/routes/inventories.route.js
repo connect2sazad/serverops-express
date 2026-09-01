@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { InventoryCreateSchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
 import { CommandExecutionSchema } from '../schemas/command.schema.js';
+import { HostKeyTrustSchema } from '../schemas/host-key.schema.js';
 import { authorizeRoles } from '../middlewares/authorize.middleware.js';
 import command_controller from '../controllers/command-execution.controller.js';
 
@@ -28,7 +29,7 @@ const INVENTORY_ID_CREDENTIALS = PREFIX + '/:id/credentials';
 const INVENTORY_ID_HOST_KEY = PREFIX + '/:id/host-key';
 const INVENTORY_ID_HOST_KEY_TRUST = PREFIX + '/:id/host-key/trust';
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
-const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discover';
+const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discovery';
 const INVENTORY_ID_COMMAND = PREFIX + '/:id/command';
 
 // get all inventories
@@ -123,7 +124,7 @@ router.get(INVENTORY_ID_HOST_KEY, authenticate, async (req, res, next) => {
 });
 
 // host key trust
-router.get(INVENTORY_ID_HOST_KEY_TRUST, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.post(INVENTORY_ID_HOST_KEY_TRUST, authenticate, authorizeRoles('admin'), validate(HostKeyTrustSchema), async (req, res, next) => {
   await inventory_controller.hostKeyTrust(req, res, next);
 });
 

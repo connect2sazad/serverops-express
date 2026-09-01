@@ -37,6 +37,7 @@ class SSHService {
             port: inventory.ssh_port ?? 22,
             username: credential.username,
             hostVerifier,
+            readyTimeout: 10000,
         };
 
         if (credential.type === 'password') {
@@ -67,15 +68,36 @@ class SSHService {
     connectWithConfig(config) {
         return new Promise((resolve, reject) => {
             const client = new Client();
+            let settled = false;
 
-            client
-                .once('ready', () => {
-                    resolve(client);
-                })
-                .once('error', error => {
-                    reject(error);
-                })
-                .connect(config);
+            const fail = error => {
+                if (settled) return;
+
+                settled = true;
+                client.destroy();
+                reject(error);
+            }
+
+            client.once('ready', () => {
+                if (settled) return;
+                settled = true;
+                resolve(client);
+            });
+
+            client.on('error', fail);
+
+            client.once('close', () => {
+                fail(new Error(
+                    'SSH connection closed before authentication completed.',
+                ));
+            });
+
+            try {
+                client.connect(config);
+            } catch (error) {
+                fail(error);
+            }
+
         });
     }
 
@@ -137,33 +159,11 @@ class SSHService {
                 },
             };
         } catch (error) {
-            if (!inventory.ssh_host_key_fingerprint) {
-                throw {
-                    code: 'HOST_KEY_NOT_TRUSTED',
-                    message: 'SSH host key has not been trusted yet.',
-                    fingerprint: presentedFingerprint,
-                };
-            }
-
-            if (
-                presentedFingerprint &&
-                presentedFingerprint !==
-                inventory.ssh_host_key_fingerprint
-            ) {
-                throw {
-                    code: 'HOST_KEY_MISMATCH',
-                    message:
-                        'SSH host key does not match the trusted fingerprint.',
-                    expected:
-                        inventory.ssh_host_key_fingerprint,
-                    received: presentedFingerprint,
-                };
-            }
-
-            throw {
-                code: 'SSH_CONNECTION_FAILED',
-                error,
-            };
+            throw this.normalizeConnectionError(
+                inventory,
+                presentedFingerprint,
+                error
+            );
         }
     }
 
@@ -291,91 +291,261 @@ class SSHService {
             hostVerifier
         );
 
-        return new Promise((resolve, reject) => {
-
-            const client = new Client();
-
-            client
-                .on('ready', () => {
-                    resolve(client);
-                })
-                .on('error', reject)
-                .connect(config);
-
-        });
+        try {
+            return await this.connectWithConfig(config);
+        } catch (error) {
+            throw this.normalizeConnectionError(
+                inventory,
+                presentedFingerprint,
+                error
+            );
+        }
 
     }
 
     // fucntion to execute commands while the server is connevcted through this.connect()
-    async executeCommandOnConnection(client, command, timeout = 30000) {
-
+    executeCommandOnConnection(client, command, timeout = 30000) {
         return new Promise((resolve, reject) => {
+            const maxOutputBytes = 1024 * 1024;
+            const stdout = [];
+            const stderr = [];
 
-            let timer = null;
+            let outputBytes = 0;
             let finished = false;
+            let stream;
+            let timer;
 
-            client.exec(command, (err, stream) => {
+            const finish = (error, result) => {
+                if (finished) return;
 
-                if (err) {
-                    return reject(err);
+                finished = true;
+                clearTimeout(timer);
+
+                client.removeListener('error', onClientError);
+                client.removeListener('close', onClientClose);
+
+                if (error) {
+                    client.destroy();
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            };
+
+            const fail = (
+                code,
+                message,
+                status = HTTP_STATUS.HTTP_502_BAD_GATEWAY
+            ) => {
+                finish(new AppException(message, status, {
+                    code,
+                    expose: true,
+                }));
+            };
+
+            const onClientError = () => fail(
+                'SSH_CONNECTION_LOST',
+                'SSH connection failed during command execution.'
+            );
+
+            const onClientClose = () => fail(
+                'SSH_CONNECTION_LOST',
+                'SSH connection closed before a command result was received.'
+            );
+
+            const onStreamError = () => fail(
+                'COMMAND_STREAM_FAILED',
+                'The SSH command stream failed.'
+            );
+
+            const collect = (chunks, data) => {
+                if (finished) return;
+
+                const chunk = Buffer.isBuffer(data)
+                    ? data
+                    : Buffer.from(data);
+
+                outputBytes += chunk.length;
+
+                if (outputBytes > maxOutputBytes) {
+                    fail(
+                        'COMMAND_OUTPUT_LIMIT',
+                        'Command output exceeded the 1 MiB limit.'
+                    );
+                    return;
                 }
 
-                let stdout = '';
-                let stderr = '';
+                chunks.push(chunk);
+            };
 
-                const cleanup = () => {
-                    if (timer) {
-                        clearTimeout(timer);
-                        timer = null;
+            client.on('error', onClientError);
+            client.once('close', onClientClose);
+
+            // Start before requesting the channel.
+            timer = setTimeout(() => {
+                fail(
+                    'COMMAND_TIMEOUT',
+                    'The SSH command exceeded its time limit; remote outcome is unknown.',
+                    HTTP_STATUS.HTTP_408_REQUEST_TIMEOUT
+                );
+            }, timeout);
+
+            try {
+                client.exec(command, (error, channel) => {
+                    if (error) {
+                        fail(
+                            'COMMAND_CHANNEL_FAILED',
+                            'The SSH command channel could not be opened.'
+                        );
+                        return;
                     }
-                }
 
-                timer = setTimeout(() => {
+                    stream = channel;
 
-                    if (finished) return;
+                    stream.on('error', onStreamError);
+                    stream.stderr.on('error', onStreamError);
 
-                    finished = true;
+                    // The channel might arrive after the timeout.
+                    if (finished) {
+                        stream.close();
+                        return;
+                    }
 
-                    stream.close();
+                    stream.on('data', data => collect(stdout, data));
 
-                    cleanup();
-
-                    const timeoutError = new AppException(
-                        `Command timed out after ${timeout}ms`,
-                        HTTP_STATUS.HTTP_408_REQUEST_TIMEOUT
+                    stream.stderr.on(
+                        'data',
+                        data => collect(stderr, data)
                     );
 
-                    timeoutError.code = 'COMMAND_TIMEOUT';
+                    stream.once('close', (code, signal) => {
+                        if (finished) return;
 
-                    reject(timeoutError);
+                        if (!Number.isInteger(code) && !signal) {
+                            fail(
+                                'COMMAND_RESULT_UNKNOWN',
+                                'The SSH command closed without an exit status.'
+                            );
+                            return;
+                        }
 
-                }, timeout);
-
-                stream.on('data', data => {
-                    stdout += data.toString();
-                });
-
-                stream.stderr.on('data', data => {
-                    stderr += data.toString();
-                });
-
-                stream.on('close', code => {
-
-                    if (finished) return;
-
-                    finished = true;
-                    cleanup();
-
-                    resolve({
-                        stdout,
-                        stderr,
-                        exitCode: code,
+                        finish(null, {
+                            stdout: Buffer.concat(stdout).toString('utf8'),
+                            stderr: Buffer.concat(stderr).toString('utf8'),
+                            exitCode: code ?? null,
+                            signal: signal ?? null,
+                        });
                     });
-                })
-
-            })
-
+                });
+            } catch (error) {
+                fail(
+                    'COMMAND_CHANNEL_FAILED',
+                    'The SSH command could not be started.'
+                );
+            }
         });
+    }
+
+    normalizeConnectionError(inventory, presentedFingerprint, error) {
+
+        if (
+            inventory.ssh_host_key_fingerprint &&
+            presentedFingerprint &&
+            presentedFingerprint !== inventory.ssh_host_key_fingerprint
+        ) {
+            return new AppException(
+                'SSH host key does not match the trusted fingerprint.',
+                HTTP_STATUS.HTTP_409_CONFLICT,
+                {
+                    code: 'SSH_HOST_KEY_MISMATCH'
+                }
+            );
+        }
+
+        if (
+            !inventory.ssh_host_key_fingerprint &&
+            presentedFingerprint
+        ) {
+            return new AppException(
+                'No SSH host-key fingerprint has been approved!',
+                HTTP_STATUS.HTTP_409_CONFLICT, {
+                code: 'SSH_HOST_KEY_NOT_TRUSTED'
+            }
+            );
+        }
+
+        if (error.level === 'client-authentication') {
+            return new AppException(
+                'The SSH Server rejected the configured credential.',
+                HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+                {
+                    code: 'SSH_AUTHENTICATION_FAILED',
+                    expose: true
+                }
+            );
+        }
+
+        if (
+            error.code === 'ETIMEDOUT' ||
+            error.level === 'client-timeout'
+        ) {
+            return new AppException(
+                'The SSH connection timedout.',
+                HTTP_STATUS.HTTP_504_GATEWAY_TIMEOUT,
+                {
+                    code: 'SSH_CONNECTION_TIMEOUT',
+                    expose: true,
+                }
+            );
+        }
+
+        if (error.code === 'ECONNREFUSED') {
+            return new AppException(
+                'The SSH server refused the connection',
+                HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+                {
+                    code: 'SSH_CONNECTION_REFUSED',
+                    expose: true,
+                }
+            );
+        }
+
+        if (
+            error.code === 'ENOTFOUND' ||
+            error.code === 'EAI_AGAIN'
+        ) {
+            return new AppException(
+                'The SSH hostname could not be resolved.',
+                HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+                {
+                    code: 'SSH_DNS_FAILED',
+                    expose: true,
+                }
+            );
+        }
+
+        if (
+            error.code === 'EHOSTUNREACH' ||
+            error.code === 'ENETUNREACH'
+        ) {
+            return new AppException(
+                'The SSH server is unreachable.',
+                HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+                {
+                    code: 'SSH_HOST_UNREACHABLE',
+                    expose: true,
+                }
+            );
+        }
+
+        return new AppException(
+            'The SSH connection failed.',
+            HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+            {
+                code: 'SSH_CONNECTION_FAILED',
+                expose: true
+            }
+        );
 
     }
 }
