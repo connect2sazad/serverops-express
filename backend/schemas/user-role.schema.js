@@ -1,5 +1,41 @@
 import { z } from 'zod';
 import BaseSchema from './base.schema.js';
+import { PERMISSION_VALUES } from '../config/permissions.js';
+
+const PermissionSchema = z.enum(PERMISSION_VALUES);
+
+const PermissionArraySchema = z.preprocess(
+    value => {
+        if(typeof value !== 'string') return value;
+
+        try{
+            return JSON.parse(value);
+        } catch {
+            return value;
+        }
+    },
+    z.array(PermissionSchema)
+        .max(PERMISSION_VALUES.length)
+        .refine(
+            permissions => new Set(permissions).size === permissions.length,
+            {
+                message: 'Duplicate permissions are not allowed.',
+            }
+        )
+);
+
+const RoleResponsePermissionSchema = z.preprocess(
+    value => value ?? [],
+    PermissionArraySchema
+);
+
+const RoleNameSchema = z.string().trim().min(3).max(50);
+
+const RoleSlugSchema = z.string().trim().min(3).max(50)
+    .regex(
+        /^[a-z0-9-]+$/,
+        'Role slug may contain lowercase letters, numbers, and hyphens only.'
+    );
 
 export const UserRoleSchema = BaseSchema.extend({
 
@@ -7,7 +43,7 @@ export const UserRoleSchema = BaseSchema.extend({
 
     slug: z.string(),
 
-    permissions: z.json(),
+    permissions: RoleResponsePermissionSchema,
 
 });
 
@@ -18,7 +54,7 @@ export const UserRoleCreateSchema = z.object({
 
     slug: z.string().min(3).max(50),
 
-    permissions: z.json(),
+    permissions: PermissionArraySchema.default([]),
 
 });
 
@@ -29,6 +65,11 @@ export const UserRoleUpdateSchema = z.object({
 
     slug: z.string().min(3).max(50).optional(),
 
-    permissions: z.json().optional(),
+    permissions: PermissionArraySchema.optional(),
 
-});
+}).refine(
+    data => Object.keys(data).length > 0,
+    {
+        message: 'At least one field must be provided.'
+    }
+);

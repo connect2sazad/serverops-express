@@ -3,10 +3,8 @@ import { z } from 'zod';
 // login
 export const loginSchema = z.object({
 
-    // userid: z.string(3, 'Userid is required'),
     userid: z.string().trim().min(3).max(50),
 
-    // password: z.string().min(6, 'Password is required'),
     password: z.string().min(6).max(100),
 
 });

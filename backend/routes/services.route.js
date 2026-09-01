@@ -13,8 +13,8 @@ const PREFIX = INVENTORY_ID + '/services';
 const SERVICES = PREFIX;
 const SERVICE_NAME = PREFIX + '/:service';
 const SERVICE_START = PREFIX + '/:service/start';
-const SERVICE_STOP = PREFIX + '/:service/stop';
 const SERVICE_RESTART = PREFIX + '/:service/restart';
+const SERVICE_STOP = PREFIX + '/:service/stop';
 const SERVICE_ENABLE = PREFIX + '/:service/enable';
 const SERVICE_DISABLE = PREFIX + '/:service/disable';
 
@@ -32,44 +32,40 @@ router.get(SERVICE_NAME, authenticate, authorizeRoles('admin'), validate(Service
 
 });
 
+// start service
+router.post(SERVICE_START, authenticate, authorizeRoles('admin'), validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
 
+  await service_controller.service_action(req, res, next, 'start');
 
+});
 
-// // restart service
-// router.post(SERVICE_RESTART, authenticate, validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
+// restart service
+router.post(SERVICE_RESTART, authenticate, authorizeRoles('admin'), validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
 
-//   await service_controller.service_action(req, res, next, 'restart');
+  await service_controller.service_action(req, res, next, 'restart');
 
-// });
+});
 
-// // start service
-// router.post(SERVICE_START, authenticate, validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
+// stop service
+router.post(SERVICE_STOP, authenticate, authorizeRoles('admin'), validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
 
-//   await service_controller.service_action(req, res, next, 'start');
+  await service_controller.service_action(req, res, next, 'stop');
 
-// });
+});
 
-// // stop service
-// router.post(SERVICE_STOP, authenticate, validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
+// enable service
+router.post(SERVICE_ENABLE, authenticate, authorizeRoles('admin'), validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
 
-//   await service_controller.service_action(req, res, next, 'stop');
+  await service_controller.service_action(req, res, next, 'enable');
 
-// });
+});
 
-// // enable service
-// router.post(SERVICE_ENABLE, authenticate, validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
+// disable service
+router.post(SERVICE_DISABLE, authenticate, authorizeRoles('admin'), validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
 
-//   await service_controller.service_action(req, res, next, 'enable');
+  await service_controller.service_action(req, res, next, 'disable');
 
-// });
-
-// // disable service
-// router.post(SERVICE_DISABLE, authenticate, validate(ServiceParamsSchema, 'params'), async (req, res, next) => {
-
-//   await service_controller.service_action(req, res, next, 'disable');
-
-// });
-
+});
 
 
 export default router;

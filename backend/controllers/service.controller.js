@@ -1,6 +1,6 @@
 import AppException from "../exceptions/exception.js";
 import HTTP_STATUS from "../exceptions/status_codes.js";
-import { Inventory, Credential, CommandExecution } from "../models/index.js";
+import { Inventory, Credential, CommandExecution, ManagedService } from "../models/index.js";
 import service_service from "../services/service.service.js";
 
 class ServiceController {
@@ -54,7 +54,7 @@ class ServiceController {
 
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = services.metadata.startedAt;
+            inventory.last_connected_at = new Date(services.metadata.startedAt);
             await inventory.save();
 
             return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
@@ -82,7 +82,7 @@ class ServiceController {
 
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = service_response.metadata.startedAt;
+            inventory.last_connected_at = new Date(service_response.metadata.startedAt);
             await inventory.save();
 
             return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
@@ -126,8 +126,44 @@ class ServiceController {
 
         try {
 
-            const { id, service } = req.params;
+            const { service } = req.params;
             const { inventory, credential } = await this.init(req);
+
+            const permissionByAction = {
+                restart: 'can_restart',
+                start: 'can_start',
+                stop: 'can_stop',
+                enable: 'can_enable',
+                disable: 'can_disable',
+            }
+
+            const permissionField = permissionByAction[action];
+
+            if(!permissionField){
+                throw new AppException(
+                    'Unsupported service action.',
+                    HTTP_STATUS.HTTP_400_BAD_REQUEST
+                );
+            }
+
+            const managedService = await ManagedService.findOne({
+                where: {
+                    inventory_id: inventory.id,
+                    service_name: service,
+                    status: true,
+                    deleted_at: null,
+                }
+            });
+
+            if(
+                !managedService ||
+                managedService[permissionField] !== true
+            ){
+                throw new AppException(
+                    `The ${action} action is not allowed for this service.`,
+                    HTTP_STATUS.HTTP_403_FORBIDDEN
+                );
+            }
 
             const result = await service_service.service_action(
                 inventory,
@@ -138,7 +174,7 @@ class ServiceController {
 
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = result.metadata.startedAt;
+            inventory.last_connected_at = new Date(result.metadata.startedAt);
             await inventory.save();
 
             const message =

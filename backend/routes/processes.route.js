@@ -4,7 +4,7 @@ import { INVENTORY_ID } from './inventories.route.js';
 import process_controller from '../controllers/process.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { authorizeRoles } from '../middlewares/authorize.middleware.js';
-import { ProcessParamsSchema } from '../schemas/process.schema.js';
+import { ProcessParamsSchema, ProcessActionSchema } from '../schemas/process.schema.js';
 
 const router = express.Router();
 const PREFIX = INVENTORY_ID + '/processes';
@@ -12,8 +12,8 @@ const PREFIX = INVENTORY_ID + '/processes';
 // processes
 const PROCESSES = PREFIX;
 const PROCESS_ID = PREFIX + '/:pid';
-const PROCESS_ID_KILL = PREFIX + '/:pid/kill';
 const PROCESS_ID_TERMINATE = PREFIX + '/:pid/terminate';
+const PROCESS_ID_KILL = PREFIX + '/:pid/kill';
 
 // get all processes
 router.get(PROCESSES, authenticate, authorizeRoles('admin'), async (req, res, next) => {
@@ -29,19 +29,19 @@ router.get(PROCESS_ID, authenticate, authorizeRoles('admin'), validate(ProcessPa
 
 });
 
-// terminate a process by id
-// router.post(PROCESS_ID_TERMINATE, authenticate, validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
+// terminate a process
+router.post(PROCESS_ID_TERMINATE, authenticate, authorizeRoles('admin'), validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
 
-//   await process_controller.terminateProcess(req, res, next, 'terminate');
+  await process_controller.terminateProcess(req, res, next, 'terminate');
 
-// });
+});
 
-// // force kill a process by id
-// router.post(PROCESS_ID_KILL, authenticate, validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
+// kill a process
+router.post(PROCESS_ID_KILL, authenticate, authorizeRoles('admin'), validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
 
-//   await process_controller.terminateProcess(req, res, next, 'force_kill');
+  await process_controller.terminateProcess(req, res, next, 'force_kill');
 
-// });
+});
 
 
 

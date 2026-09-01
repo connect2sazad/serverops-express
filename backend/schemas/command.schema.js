@@ -4,6 +4,7 @@ import BaseSchema from './base.schema.js';
 import {InventorySchema} from './inventory.schema.js';
 import {CredentialSchema} from './credential.schema.js';
 import {UserSchema} from './user.schema.js';
+import {ManagedCommandSchema} from './managed-command.schema.js';
 
 // Command execution schema
 export const CommandExecutionSchema = z.object({
@@ -32,8 +33,8 @@ export const CommandExecutionResponseSchema = BaseSchema.extend({
     started_at: z.coerce.date(),
     finished_at: z.coerce.date(),
 
-    remarks: z.string().nullable().optional(),
-    tags: z.json().nullable().optional(),
+    managed_command_id: z.number().int().positive().nullable().optional(),
+    managed_command: ManagedCommandSchema.nullable().optional(),
 
     inventory: InventorySchema.optional(),
     credential: CredentialSchema.optional(),

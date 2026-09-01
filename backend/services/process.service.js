@@ -93,26 +93,55 @@ class ProcessService {
                 checkCommand
             );
 
-            if (checkResult.exitCode !== 0) {
+            if (checkResult.exitCode !== 0 || !checkResult.stdout.trim()) {
                 return {
-                    process: null,
+                    pid,
+                    signal,
                     command,
                     stdout: checkResult.stdout,
                     stderr: checkResult.stderr,
                     exitCode: checkResult.exitCode,
                     commandStatus: 'failed',
                     message: `Process ${pid} does not exist`,
+                    verification: {
+                        checked: true,
+                        verified: false,
+                        state: 'not_found'
+                    },
                     metadata: {
                         startedAt,
                         duration: getDuration(startedAt),
                     },
-                }
+                };
             }
 
             const result = await ssh_service.executeCommandOnConnection(
                 client,
                 command
             );
+
+            const verificationCommand = [
+                'for i in 1 2 3 4 5;',
+                'do',
+                'if ! sudo -n kill -0 ${pid} 2>/dev/null;',
+                'then echo terminated; exit 0;',
+                'fi;',
+                'sleep 1;',
+                'done;',
+                'echo running;',
+                'exit 1',
+            ].join(' ');
+
+            const verificationResult = await ssh_service.executeCommandOnConnection(client, verificationCommand);
+
+            const state = verificationResult.stdout.trim();
+
+            const verification = {
+                checked: true,
+                verified: state === 'terminated',
+                expected_state: 'terminated',
+                state,
+            };
 
             return {
                 pid,
@@ -122,9 +151,10 @@ class ProcessService {
                 stderr: result.stderr,
                 exitCode: result.exitCode,
                 commandStatus:
-                    result.exitCode === 0
+                    result.exitCode === 0 && verification.verified
                         ? 'success'
                         : 'failed',
+                verification,
                 metadata: {
                     startedAt,
                     duration: getDuration(startedAt),

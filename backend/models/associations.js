@@ -3,6 +3,8 @@ import UserRole from "./user-role.model.js";
 import Inventory from "./inventory.model.js";
 import Credential from "./credential.model.js";
 import CommandExecution from "./command-execution.model.js";
+import ManagedService from "./managed-service.model.js";
+import ManagedCommand from "./managed-command.model.js";
 
 // =============================USER, USER ROLE============================
 // associate user to user role
@@ -49,7 +51,7 @@ Inventory.hasMany(Credential, {
 });
 
 
-// =============================COMMAND EXECUTION, CREDENTIAL, INVENTORY, USER============================
+// =============================COMMAND EXECUTION, MANAGED_COMMANDS, CREDENTIAL, INVENTORY, USER============================
 // associate command execution to creator user
 CommandExecution.belongsTo(User, {
     foreignKey: 'creator_id',
@@ -81,9 +83,65 @@ Credential.hasMany(CommandExecution, {
     as: 'command_executions',
 });
 
+CommandExecution.belongsTo(ManagedCommand, {
+    foreignKey: 'managed_command_id',
+    as: 'managed_command',
+});
+
+ManagedCommand.hasMany(CommandExecution, {
+    foreignKey: 'managed_command_id',
+    as: 'command_executions',
+});
+
+// =============================MANAGED_SERVICE, INVENTORY, USER============================
+ManagedService.belongsTo(Inventory, {
+    foreignKey: 'inventory_id',
+    as: 'inventory',
+});
+
+Inventory.hasMany(ManagedService, {
+    foreignKey: 'inventory_id',
+    as: 'managed_services',
+});
+
+ManagedService.belongsTo(User, {
+    foreignKey: 'creator_id',
+    as: 'creator',
+});
+
+User.hasMany(ManagedService, {
+    foreignKey: 'creator_id',
+    as: 'managed_services',
+});
+
+
+// =============================MANAGED_COMMAND, INVENTORY, USER============================
+ManagedCommand.belongsTo(Inventory, {
+    foreignKey: 'inventory_id',
+    as: 'inventory',
+});
+
+Inventory.hasMany(ManagedCommand, {
+    foreignKey: 'inventory_id',
+    as: 'managed_commands',
+});
+
+ManagedCommand.belongsTo(User, {
+    foreignKey: 'creator_id',
+    as: 'creator',
+});
+
+User.hasMany(ManagedCommand, {
+    foreignKey: 'creator_id',
+    as: 'managed_commands',
+});
+
+
 export {
     User,
     UserRole,
     Inventory,
     CommandExecution,
+    ManagedService,
+    ManagedCommand,
 }

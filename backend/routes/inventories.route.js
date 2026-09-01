@@ -4,10 +4,8 @@ import inventory_controller from '../controllers/inventory.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { InventoryCreateSchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
-import { CommandExecutionSchema } from '../schemas/command.schema.js';
 import { HostKeyTrustSchema } from '../schemas/host-key.schema.js';
 import { authorizeRoles } from '../middlewares/authorize.middleware.js';
-import command_controller from '../controllers/command-execution.controller.js';
 
 const router = express.Router();
 const PREFIX = '/inventories';
@@ -30,7 +28,6 @@ const INVENTORY_ID_HOST_KEY = PREFIX + '/:id/host-key';
 const INVENTORY_ID_HOST_KEY_TRUST = PREFIX + '/:id/host-key/trust';
 const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
 const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discovery';
-const INVENTORY_ID_COMMAND = PREFIX + '/:id/command';
 
 // get all inventories
 router.get(INVENTORIES, authenticate, async (req, res, next) => {
@@ -137,10 +134,5 @@ router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, authorizeRoles('admin'), 
 router.get(INVENTORY_ID_DISCOVER, authenticate, authorizeRoles('admin'), async (req, res, next) => {
   await inventory_controller.discover(req, res, next);
 });
-
-// command
-// router.post(INVENTORY_ID_COMMAND, authenticate, authorizeRoles('admin'), validate(CommandExecutionSchema), async (req, res, next) => {
-//   await command_controller.execute(req, res, next);
-// });
 
 export default router;

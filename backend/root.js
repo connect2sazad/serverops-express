@@ -12,6 +12,8 @@ import credentialsRouter from './routes/credentials.route.js';
 import commandExecutionsRouter from './routes/command-executions.route.js';
 import servicesRouter from './routes/services.route.js';
 import processesRouter from './routes/processes.route.js';
+import managedServicesRouter from './routes/managed-services.route.js';
+import managedCommandsRouter from './routes/managed-commands.route.js';
 import HTTP_STATUS from "./exceptions/status_codes.js";
 
 const router = express.Router();
@@ -42,5 +44,9 @@ router.use(API_PREFIX, commandExecutionsRouter);
 router.use(API_PREFIX, servicesRouter);
 // processes running in invetory router
 router.use(API_PREFIX, processesRouter);
+// managed services in invetory router
+router.use(API_PREFIX, managedServicesRouter);
+// managed commands
+router.use(API_PREFIX, managedCommandsRouter);
 
 export default router;

@@ -31,6 +31,11 @@ const CommandExecution = sequelize.define(
             index: true,
         },
 
+        managed_command_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+
         command: {
             type: DataTypes.TEXT,
             allowNull: false,

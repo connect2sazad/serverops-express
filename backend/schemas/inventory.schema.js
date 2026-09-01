@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import BaseSchema from './base.schema.js';
+import BaseSchema, { JsonStringArraySchema } from './base.schema.js';
 import { UserSchema } from './user.schema.js';
+
 
 // Inventory response schema
 export const InventorySchema = BaseSchema.extend({
@@ -42,9 +43,7 @@ export const InventorySchema = BaseSchema.extend({
 
     inventory_partial: z.boolean().nullable(),
 
-    inventory_missing_fields: z
-        .array(z.string())
-        .nullable(),
+    inventory_missing_fields: JsonStringArraySchema,
 
 });
 

@@ -82,6 +82,37 @@ class ServiceService {
 
         try {
 
+            const verificationRules = {
+                start: {
+                    command: `systemctl is-active ${serviceName}`,
+                    expectedState: 'active',
+                },
+                stop: {
+                    command: `systemctl is-active ${serviceName}`,
+                    expectedState: 'inactive',
+                },
+                restart: {
+                    command: `systemctl is-active ${serviceName}`,
+                    expectedState: 'active',
+                },
+                enable: {
+                    command: `systemctl is-enabled ${serviceName}`,
+                    expectedState: 'enabled',
+                },
+                disable: {
+                    command: `systemctl is-enabled ${serviceName}`,
+                    expectedState: 'disabled',
+                },
+            }
+            
+            const verificationRule = verificationRules[action];
+
+            if(!verificationRule){
+                throw new Error(
+                    `Unsupported service action: ${action}`
+                );
+            }
+
             const command = `sudo -n systemctl ${action} ${serviceName}`;
 
             const result = await ssh_service.executeCommandOnConnection(
@@ -89,15 +120,38 @@ class ServiceService {
                 command
             );
 
+            const verificationResult = await ssh_service.executeCommandOnConnection(
+                client,
+                verificationRule.command
+            );
+
+            const state = (
+                verificationResult.stdout ||
+                verificationResult.stderr
+            ).trim();
+
+            let verification = {
+                checked: true,
+                verified: state === verificationRule.expectedState,
+                expected_state: verificationRule.expectedState,
+                state
+            };
+
+            const commandSucceeded = result.exitCode === 0;
+
             return {
                 command,
                 stdout: result.stdout,
                 stderr: result.stderr,
                 exitCode: result.exitCode,
+
                 commandStatus:
-                    result.exitCode === 0
+                    commandSucceeded && verification.verified
                         ? 'success'
                         : 'failed',
+
+                verification,
+
                 metadata: {
                     startedAt,
                     duration: getDuration(startedAt),

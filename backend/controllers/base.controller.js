@@ -76,19 +76,6 @@ class BaseController {
 
             // get all the records
             return await this.getAllPaginatedRecords(req, res, next);
-            // const records = await this.model.findAll({
-            //     order: [
-            //         ['id', 'DESC']
-            //     ],
-            // });
-
-            // return res.status(
-            //     HTTP_STATUS.HTTP_200_OK.status_code
-            // ).json({
-            //     success: true,
-            //     message: `${this.model.name}s retrieved successfully.`,
-            //     data: this.serializeMany(records),
-            // })
 
         } catch (error) {
             next(error);
@@ -96,7 +83,7 @@ class BaseController {
 
     }
 
-    async getAllPaginatedRecords(req, res, next) {
+    async getAllPaginatedRecords(req, res, next, where={}) {
 
         try {
 
@@ -130,6 +117,9 @@ class BaseController {
 
             // retrieve this page & count all matching records
             const { count, rows } = await this.model.findAndCountAll({
+                where,
+                include: this.includes,
+                distinct: Boolean(this.includes),
                 order: [
                     ['id', 'DESC']
                 ],
@@ -248,9 +238,6 @@ class BaseController {
 
             const record = await this.getRecord(req);
 
-            // await record.update({
-            //     deleted_at: new Date().toISOString()
-            // })
             await record.destroy();
 
             res.status(
@@ -258,7 +245,6 @@ class BaseController {
             ).json({
                 status: true,
                 message: `${this.model.name} deleted successfully!`,
-                // data: this.serialize(record), // do not return deleted user data
             });
 
         } catch (e) {

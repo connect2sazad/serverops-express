@@ -4,6 +4,8 @@ import Inventory from './inventory.model.js';
 import TokenBlacklist from './token-blacklist.model.js';
 import Credential from './credential.model.js';
 import CommandExecution from './command-execution.model.js';
+import ManagedService from './managed-service.model.js';
+import ManagedCommand from './managed-command.model.js';
 
 import './associations.js';
 
@@ -14,6 +16,8 @@ export {
   TokenBlacklist,
   Credential,
   CommandExecution,
+  ManagedService,
+  ManagedCommand,
 };
 
 export default {
@@ -23,4 +27,6 @@ export default {
   TokenBlacklist,
   Credential,
   CommandExecution,
+  ManagedService,
+  ManagedCommand,
 };

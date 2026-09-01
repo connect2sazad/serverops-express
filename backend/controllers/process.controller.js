@@ -54,7 +54,7 @@ class ProcessController {
 
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = processes.metadata.startedAt;
+            inventory.last_connected_at = new Date(processes.metadata.startedAt);
             await inventory.save();
 
             return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
@@ -82,7 +82,7 @@ class ProcessController {
 
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
-            inventory.last_connected_at = process_response.metadata.startedAt;
+            inventory.last_connected_at = new Date(process_response.metadata.startedAt);
             await inventory.save();
 
             return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
@@ -103,8 +103,16 @@ class ProcessController {
         try {
 
             const { pid } = req.params;
-
+            const { confirm_pid, reason } = req.body;
             const { inventory, credential } = await this.init(req);
+
+            if (confirm_pid !== pid){
+                throw new AppException(
+                    'Confirmed PID does not match with the requested PID.',
+                    HTTP_STATUS.HTTP_400_BAD_REQUEST
+                );
+            }
+
 
             const actions = {
                 terminate: {
@@ -123,14 +131,29 @@ class ProcessController {
                 }
             }
 
+            const selectedAction = actions[action];
+
+            if(!selectedAction){
+                throw new AppException(
+                    'Unsupported process action',
+                    HTTP_STATUS.HTTP_400_BAD_REQUEST
+                );
+            }
+
             const result = await process_service.terminateProcess(
-                inventory, credential, pid, actions[action].perform
+                inventory, credential, pid, selectedAction.perform
             );
 
-            const message =
-                result.commandStatus === 'success'
-                    ? actions[action].message.success
-                    : actions[action].message.failed;
+            const succeeded = result.commandStatus === 'success';
+
+            const message = succeeded
+                ? selectedAction.message.success
+                : selectedAction.message.failed;
+
+            // save the last connection details in the inventory
+            inventory.connection_status = 'disconnected';
+            inventory.last_connected_at = new Date(result.metadata.startedAt);
+            await inventory.save();
 
             await CommandExecution.create({
                 inventory_id: inventory.id,
@@ -144,10 +167,10 @@ class ProcessController {
                 command_status: result.commandStatus,
 
                 duration: result.metadata.duration,
-                remarks: message,
+                remarks: `${message} Reason: ${reason}`,
                 tags: [
                     'process',
-                    'terminate',
+                    action,
                     String(pid),
                     inventory.hostname,
                 ],
@@ -159,7 +182,7 @@ class ProcessController {
                 ),
             });
 
-            res.status(
+            return res.status(
                 HTTP_STATUS.HTTP_200_OK.status_code
             ).json({
                 message,
@@ -171,95 +194,6 @@ class ProcessController {
             next(e);
         }
     }
-
-    // async service_action(req, res, next, action) {
-
-    //     const messages = {
-    //         start: {
-    //             success: 'Service started successfully!',
-    //             failed: 'Service start failed!',
-    //         },
-    //         stop: {
-    //             success: 'Service stopped successfully!',
-    //             failed: 'Service stop failed!',
-    //         },
-    //         restart: {
-    //             success: 'Service restarted successfully!',
-    //             failed: 'Service restart failed!',
-    //         },
-    //         enable: {
-    //             success: 'Service enabled successfully!',
-    //             failed: 'Service enable failed!',
-    //         },
-    //         disable: {
-    //             success: 'Service disabled successfully!',
-    //             failed: 'Service disable failed!',
-    //         },
-    //     };
-
-    //     try {
-
-    //         const { id, service } = req.params;
-    //         const { inventory, credential } = await this.init(req);
-
-    //         const result = await service_service.service_action(
-    //             inventory,
-    //             credential,
-    //             service,
-    //             action
-    //         );
-
-    //         // get the connection details and save in inventory
-    //         inventory.connection_status = 'disconnected';
-    //         inventory.last_connected_at = result.metadata.startedAt;
-    //         await inventory.save();
-
-    //         const message =
-    //             result.commandStatus === 'success'
-    //                 ? messages[action].success
-    //                 : messages[action].failed;
-
-
-    //         // save the command
-    //         await CommandExecution.create({
-    //             inventory_id: inventory.id,
-    //             credential_id: credential.id,
-    //             creator_id: req.auth.id,
-
-    //             command: result.command,
-
-    //             stdout: result.stdout,
-    //             stderr: result.stderr,
-
-    //             exit_code: result.exitCode,
-    //             command_status: result.commandStatus,
-
-    //             duration: result.metadata.duration,
-
-    //             remarks: message,
-    //             tags: [service, inventory.hostname, credential.username, message],
-
-    //             started_at: new Date(result.metadata.startedAt),
-    //             finished_at: new Date(
-    //                 result.metadata.startedAt + result.metadata.duration
-    //             ),
-    //         });
-
-    //         return res.status(
-    //             HTTP_STATUS.HTTP_200_OK.status_code
-    //         ).json({
-    //             success: result.commandStatus === 'success',
-    //             message,
-    //             data: result,
-    //         });
-
-    //     } catch (e) {
-
-    //         next(e);
-
-    //     }
-
-    // }
 
 }
 
