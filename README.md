@@ -58,6 +58,7 @@
 >|   **DELETE**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/users/4    |  None |
 >|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/users/4/remarks/remove    |  None |
 >|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/users/4/tags/remove    |  None |
+>|   **UPDATE PERMISSIONS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/users/4/permissions    |  [JSON](#update-user-individual-permissions) |
 
 
 ## User Role
@@ -140,6 +141,41 @@
 >|   **FORCE KILL PROCESS**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/services/295/kill    |  None |
 
 
+## Managed Services
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-services    |  None |
+>|   **VIEW**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-services/3    |  None |
+>|   **CREATE**    |   ``POST``    |  http://127.0.0.1:3100/api/v1/inventories/1/managed-services    |  [JSON](#create-update-managed-services) |
+>|   **UPDATE**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-services/3    |  [JSON](#create-update-managed-services) |
+>|   **DELETE**    |   ``DELETE``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-services/3    |  None |
+<!-- >|   **ENABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/enable    |   None |
+>|   **DISABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/disable    |  None |
+>|   **SET REMARKS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/remarks   | [JSON](#createupdate-credential) |
+>|   **SET TAGS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/tags    | [JSON](#createupdate-credential) |
+>|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/remarks/remove    |  None |
+>|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/tags/remove    |  None | -->
+
+
+## Managed Commands
+>|   Action |    Request Type    |   Link    |   Request Body    |
+>|----------|--------------------|-----------|-------------------|
+>|   **LIST**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands    |  None |
+>|   **VIEW**    |   ``GET``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3    |  None |
+>|   **CREATE**    |   ``POST``    |  http://127.0.0.1:3100/api/v1/inventories/1/managed-commands    |  [JSON](#create-update-managed-commands) |
+>|   **UPDATE**    |   ``PUT``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3    |  [JSON](#create-update-managed-commands) |
+>|   **DELETE**    |   ``DELETE``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3    |  None |
+>|   **ENABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/enable    |   None |
+>|   **DISABLE**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/disable    |  None |
+>|   **SET REMARKS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/remarks   | [JSON](#createupdate-credential) |
+>|   **SET TAGS**    |   ``PUT``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/tags    | [JSON](#createupdate-credential) |
+>|   **REMOVE REMARKS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/remarks/remove    |  None |
+>|   **REMOVE TAGS**    |   ``DELETE``   |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/tags/remove    |  None |
+>|   **EXECUTE COMMAND**    |   ``POST``    |   http://127.0.0.1:3100/api/v1/inventories/1/managed-commands/3/execute    |  [JSON](#create-update-managed-commands) |
+
+
+
+
 # JSON:
 ## Create/Update/Set Remarks/Set Tags
 ```
@@ -212,6 +248,37 @@
 ```
 {
   "fingerprint": "THE_VERIFIED_SHA256_FINGERPRINT_HERE"
+}
+```
+## Update User Individual Permissions
+```
+{
+    "individual_permissions": [
+        "inventories.list",
+        "inventories.read",
+        "services.list",
+        "services.read"
+    ]
+}
+```
+## Create Update Managed Services
+```
+{
+  "service_name": "nginx",
+  "can_restart": true,
+  "can_start": true,
+  "can_stop": true,
+  "can_enable": true,
+  "can_disable": true
+}
+```
+## Create Update Managed Commands
+```
+{
+  "name": "Check uptime",
+  "description": "Display server uptime and load averages",
+  "command": "uptime",
+  "timeout_seconds": 10
 }
 ```
 

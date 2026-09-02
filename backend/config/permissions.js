@@ -174,25 +174,28 @@ export const PERMISSIONS = Object.freeze({
 
     USERS_STATUS:
         'users.status',
+    
+    USERS_PERMISSIONS_UPDATE:
+        'users.permissions.update',
 
     // Roles
-    ROLES_LIST:
-        'roles.list',
+    USER_ROLES_LIST:
+        'user-roles.list',
 
-    ROLES_READ:
-        'roles.read',
+    USER_ROLES_READ:
+        'user-roles.read',
 
-    ROLES_CREATE:
-        'roles.create',
+    USER_ROLES_CREATE:
+        'user-roles.create',
 
-    ROLES_UPDATE:
-        'roles.update',
+    USER_ROLES_UPDATE:
+        'user-roles.update',
 
-    ROLES_DELETE:
-        'roles.delete',
+    USER_ROLES_DELETE:
+        'user-roles.delete',
 
-    ROLES_STATUS:
-        'roles.status',
+    USER_ROLES_STATUS:
+        'user-roles.status',
 });
 
 export const PERMISSION_VALUES = Object.freeze(

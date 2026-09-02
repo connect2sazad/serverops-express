@@ -113,7 +113,22 @@ export default function AuthProvider({ children }) {
     const hasRole = useCallback(
         (...roles) => {
             return Boolean(
-                user && roles.includes(user.role)
+                user && roles.includes(user.role?.slug)
+            );
+        }, [user]
+    );
+
+    const hasPermission = useCallback(
+        (...required_permissions) => {
+            const permissions = user?.permissions;
+
+            if(
+                !Array.isArray(permissions) || required_permissions.length === 0
+            ) return false;
+
+            return (
+                permissions.includes('*')
+                || required_permissions.every(permission => permissions.includes(permission))
             );
         }, [user]
     );
@@ -126,12 +141,14 @@ export default function AuthProvider({ children }) {
             login,
             logout,
             hasRole,
+            hasPermission
         }), [
         user,
         initializing,
         login,
         logout,
         hasRole,
+        hasPermission
     ]
     );
 

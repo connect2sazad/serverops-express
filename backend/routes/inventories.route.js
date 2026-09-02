@@ -5,7 +5,8 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { InventoryCreateSchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
 import { HostKeyTrustSchema } from '../schemas/host-key.schema.js';
-import { authorizeRoles } from '../middlewares/authorize.middleware.js';
+import { authorizePermissions } from '../middlewares/authorize.middleware.js';
+import { PERMISSIONS } from '../config/permissions.js';
 
 const router = express.Router();
 const PREFIX = '/inventories';
@@ -30,42 +31,42 @@ const INVENTORY_ID_TEST_CONNECTION = PREFIX + '/:id/test-connection';
 const INVENTORY_ID_DISCOVER = PREFIX + '/:id/discovery';
 
 // get all inventories
-router.get(INVENTORIES, authenticate, async (req, res, next) => {
+router.get(INVENTORIES, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_LIST), async (req, res, next) => {
 
   await inventory_controller.get(req, res, next);
 
 });
 
 // get a single inventory details by id
-router.get(INVENTORY_ID, authenticate, async (req, res, next) => {
+router.get(INVENTORY_ID, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_READ), async (req, res, next) => {
 
   await inventory_controller.get(req, res, next);
 
 });
 
 // create a inventory
-router.post(INVENTORIES, authenticate, authorizeRoles('admin'), validate(InventoryCreateSchema), async (req, res, next) => {
+router.post(INVENTORIES, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_CREATE), validate(InventoryCreateSchema), async (req, res, next) => {
 
   await inventory_controller.create(req, res, next);
 
 });
 
 // update a inventory
-router.put(INVENTORY_ID, authenticate, authorizeRoles('admin'), validate(InventoryUpdateSchema), async (req, res, next) => {
+router.put(INVENTORY_ID, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_UPDATE), validate(InventoryUpdateSchema), async (req, res, next) => {
 
   await inventory_controller.update(req, res, next);
 
 });
 
 // delete user role
-router.delete(INVENTORY_ID, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(INVENTORY_ID, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_DELETE), async (req, res, next) => {
 
   await inventory_controller.delete(req, res, next);
 
 });
 
 // enable user role
-router.put(INVENTORY_ID_ENABLE, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(INVENTORY_ID_ENABLE, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_STATUS), async (req, res, next) => {
   req.body = {
     status: true
   };
@@ -73,7 +74,7 @@ router.put(INVENTORY_ID_ENABLE, authenticate, authorizeRoles('admin'), async (re
 });
 
 // disable user role
-router.put(INVENTORY_ID_DISABLE, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(INVENTORY_ID_DISABLE, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_STATUS), async (req, res, next) => {
   req.body = {
     status: false
   };
@@ -81,28 +82,28 @@ router.put(INVENTORY_ID_DISABLE, authenticate, authorizeRoles('admin'), async (r
 });
 
 // update user role remarks
-router.put(INVENTORY_ID_REMARKS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(INVENTORY_ID_REMARKS, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_UPDATE), async (req, res, next) => {
 
     await inventory_controller.setRemarks(req, res, next);
 
 });
 
 // update user role tags
-router.put(INVENTORY_ID_TAGS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(INVENTORY_ID_TAGS, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_UPDATE), async (req, res, next) => {
 
     await inventory_controller.setTags(req, res, next);
 
 });
 
 // remove user role remarks
-router.delete(INVENTORY_ID_REMOVE_REMARKS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(INVENTORY_ID_REMOVE_REMARKS, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_UPDATE), async (req, res, next) => {
 
     await inventory_controller.removeRemarks(req, res, next);
 
 });
 
 // remove user role tags
-router.delete(INVENTORY_ID_REMOVE_TAGS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(INVENTORY_ID_REMOVE_TAGS, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_UPDATE), async (req, res, next) => {
 
     await inventory_controller.removeTags(req, res, next);
 
@@ -110,28 +111,28 @@ router.delete(INVENTORY_ID_REMOVE_TAGS, authenticate, authorizeRoles('admin'), a
 
 // ================================Credentials================================
 // show all associated credentials
-router.get(INVENTORY_ID_CREDENTIALS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.get(INVENTORY_ID_CREDENTIALS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_READ), async (req, res, next) => {
   await inventory_controller.inventoryCredentials(req, res, next);
 });
 
 // ================================SSH================================
 // host key
-router.get(INVENTORY_ID_HOST_KEY, authenticate, async (req, res, next) => {
+router.get(INVENTORY_ID_HOST_KEY, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_HOST_KEY_READ), async (req, res, next) => {
   await inventory_controller.hostKey(req, res, next);
 });
 
 // host key trust
-router.post(INVENTORY_ID_HOST_KEY_TRUST, authenticate, authorizeRoles('admin'), validate(HostKeyTrustSchema), async (req, res, next) => {
+router.post(INVENTORY_ID_HOST_KEY_TRUST, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_HOST_KEY_TRUST), validate(HostKeyTrustSchema), async (req, res, next) => {
   await inventory_controller.hostKeyTrust(req, res, next);
 });
 
 // test ssh connection
-router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.get(INVENTORY_ID_TEST_CONNECTION, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_TEST_CONNECTION), async (req, res, next) => {
   await inventory_controller.testConnection(req, res, next);
 });
 
 // discovery
-router.get(INVENTORY_ID_DISCOVER, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.get(INVENTORY_ID_DISCOVER, authenticate, authorizePermissions(PERMISSIONS.INVENTORIES_DISCOVER), async (req, res, next) => {
   await inventory_controller.discover(req, res, next);
 });
 

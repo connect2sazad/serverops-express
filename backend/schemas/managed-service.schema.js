@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import BaseSchema from './base.schema.js';
+import { UserSchema } from './user.schema.js';
+import { InventorySchema } from './inventory.schema.js';
 
 const ServiceNameSchema = z.string()
     .trim()
@@ -19,6 +21,9 @@ export const ManagedServiceSchema = BaseSchema.extend({
     can_stop: z.boolean(),
     can_enable: z.boolean(),
     can_disable: z.boolean(),
+
+    inventory: InventorySchema.optional(),
+    creator: UserSchema.optional(),
 
 });
 

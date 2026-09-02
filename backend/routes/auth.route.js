@@ -4,8 +4,9 @@ import auth_controller from '../controllers/auth.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
-import { authorizeRoles } from '../middlewares/authorize.middleware.js';
+import { authorizeRoles, authorizePermissions } from '../middlewares/authorize.middleware.js';
 import { loginLimiter } from '../middlewares/rate-limit.middleware.js';
+import { PERMISSIONS } from '../config/permissions.js';
 
 const router = express.Router();
 const PREFIX = '/auth';
@@ -16,7 +17,7 @@ const REGISTER = PREFIX + '/register';
 const LOGOUT = PREFIX + '/logout';
 
 // register a user
-router.post(REGISTER, authenticate, authorizeRoles('admin'), validate(registerSchema), async (req, res, next) => {
+router.post(REGISTER, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USERS_CREATE), validate(registerSchema), async (req, res, next) => {
  
   await auth_controller.register(req, res, next);
 

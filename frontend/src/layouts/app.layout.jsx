@@ -25,7 +25,7 @@ export default function AppLayout() {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const {
-        user, logout, hasRole
+        user, logout, hasPermission
     } = useAuth();
 
     async function handleLogout() {
@@ -73,7 +73,7 @@ export default function AppLayout() {
                         )
                     )}
 
-                    {hasRole("admin") && (
+                    {hasPermission('users.list') && (
                         <NavLink to="/users"
                             className={({ isActive }) =>
                                 `sidebar-link ${isActive ? "active" : ""
@@ -108,11 +108,11 @@ export default function AppLayout() {
                     <div className="ms-auto d-flex align-items-center gap-3">
                         <div className="text-end">
                             <div className="small fw-semibold">
-                                {user.username}
+                                {user.name || user.userid}
                             </div>
 
                             <div className="small text-secondary text-capitalize">
-                                {user.role}
+                                {user.role?.name || user.role?.slug}
                             </div>
                         </div>
 

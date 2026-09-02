@@ -2,9 +2,9 @@ import { z } from 'zod';
 import BaseSchema from './base.schema.js';
 import { PERMISSION_VALUES } from '../config/permissions.js';
 
-const PermissionSchema = z.enum(PERMISSION_VALUES);
+export const PermissionSchema = z.enum(PERMISSION_VALUES);
 
-const PermissionArraySchema = z.preprocess(
+export const PermissionArraySchema = z.preprocess(
     value => {
         if(typeof value !== 'string') return value;
 
@@ -24,7 +24,7 @@ const PermissionArraySchema = z.preprocess(
         )
 );
 
-const RoleResponsePermissionSchema = z.preprocess(
+export const PermissionResponseSchema = z.preprocess(
     value => value ?? [],
     PermissionArraySchema
 );
@@ -43,7 +43,7 @@ export const UserRoleSchema = BaseSchema.extend({
 
     slug: z.string(),
 
-    permissions: RoleResponsePermissionSchema,
+    permissions: PermissionResponseSchema,
 
 });
 

@@ -32,11 +32,11 @@ export default function DashboardPage() {
               </div>
 
               <div className="fw-semibold mt-1">
-                {user.username}
+                {user.name || user.userid}
               </div>
 
               <span className="badge text-bg-dark text-capitalize mt-2">
-                {user.role}
+                {user.role?.name || user.role?.slug}
               </span>
             </div>
           </div>

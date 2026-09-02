@@ -11,7 +11,7 @@ export async function loginRequest(userid, password) {
 
 export async function currentUserRequest() {
     const response = await apiClient.get("/users/self");
-    return response.data;
+    return response.data.data;
 }
 
 export async function logoutRequest() {

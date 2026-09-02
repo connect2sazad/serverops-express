@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
-import { TokenBlacklist, User } from '../models/index.js';
-
+import { TokenBlacklist, User, UserRole } from '../models/index.js';
 import { JWT_EXPIRES_IN, JWT_SECRET_KEY } from '../config/config.js';
+import { PermissionResponseSchema } from '../schemas/user-role.schema.js';
 
 export const authenticate = async (req, res, next) => {
 
@@ -57,11 +57,38 @@ export const authenticate = async (req, res, next) => {
             );
         }
 
-        req.user = user;
+        const user_role = await UserRole.findByPk(user.user_role_id);
+
+        if(!user_role || !user_role.status){
+            throw new AppException(
+                "Your User Role is unavailable or disabled",
+                HTTP_STATUS.HTTP_401_UNAUTHORIZED
+            );
+        }
+
+        // fetch user role permissions
+        const user_role_permissions = PermissionResponseSchema.parse(user_role.permissions);
+        // fetch user individual permissions
+        const individual_permissions = PermissionResponseSchema.parse(user.individual_permissions);
+
+        // combine both the permissions
+        const effective_permissions = [
+            ...new Set([
+                ...user_role_permissions,
+                ...individual_permissions,
+            ]),
+        ];
+
 
         // store authenticated user
-        req.auth = decoded;
-
+        req.user = user;
+        req.auth = {
+            ...decoded,
+            role: user_role.slug,
+            user_role_permissions,
+            individual_permissions,
+            permissions: effective_permissions
+        }
         // store authenticated jwt token
         req.token = token;
 
@@ -69,16 +96,21 @@ export const authenticate = async (req, res, next) => {
 
     } catch (error) {
 
-        if(error instanceof AppException){
-            return next(error);
+        // console.log('JWT ERROR:', error.name, error.message);
+        if(
+            error instanceof jwt.JsonWebTokenError ||
+            error instanceof jwt.TokenExpiredError ||
+            error instanceof jwt.NotBeforeError
+        ){
+            return next(
+                new AppException(
+                    'Invalid or expired authentication token.',
+                    HTTP_STATUS.HTTP_401_UNAUTHORIZED
+                )
+            );
         }
 
-        return next(
-            new AppException(
-                'Invalid or expired authentication token.',
-                HTTP_STATUS.HTTP_401_UNAUTHORIZED
-            )
-        );
+        return next(error);
 
     }
 

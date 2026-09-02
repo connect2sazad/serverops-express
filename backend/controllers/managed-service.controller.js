@@ -5,6 +5,7 @@ import BaseController from './base.controller.js';
 import {
     Inventory,
     ManagedService,
+    User,
 } from '../models/index.js';
 
 import {
@@ -24,6 +25,16 @@ class ManagedServiceController extends BaseController {
             createSchema: ManagedServiceCreateSchema,
             updateSchema: ManagedServiceUpdateSchema,
             creator: true,
+            includes: [
+                {
+                    model: User,
+                    as: 'creator',
+                },
+                {
+                    model: Inventory,
+                    as: 'inventory',
+                }
+            ]
         });
     }
 
@@ -33,7 +44,7 @@ class ManagedServiceController extends BaseController {
                 id: req.params.managed_service_id,
                 inventory_id: req.params.id,
                 deleted_at: null,
-            },
+            }
         });
 
         if (!managedService) {
@@ -79,8 +90,11 @@ class ManagedServiceController extends BaseController {
 
     async getOne(req, res, next) {
         try {
-            const managedService =
-                await this.getManagedService(req);
+            const managedService = await this.getManagedService(req);
+
+            await managedService.reload({
+                include: this.includes,
+            });
 
             return res
                 .status(HTTP_STATUS.HTTP_200_OK.status_code)
@@ -211,7 +225,7 @@ class ManagedServiceController extends BaseController {
             if (
                 data.service_name !== undefined &&
                 data.service_name !==
-                    managedService.service_name
+                managedService.service_name
             ) {
                 const duplicate =
                     await ManagedService.findOne({

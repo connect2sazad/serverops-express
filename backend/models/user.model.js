@@ -18,6 +18,12 @@ const User = sequelize.define(
             allowNull: false,
         },
 
+        individual_permissions: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: [],
+        },
+
         name: {
             type: DataTypes.STRING(100),
             allowNull: false

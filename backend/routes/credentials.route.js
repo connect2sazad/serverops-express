@@ -4,7 +4,8 @@ import credential_controller from '../controllers/credential.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import upload from '../middlewares/upload.middleware.js';
-import { authorizeRoles } from '../middlewares/authorize.middleware.js';
+import { authorizePermissions } from '../middlewares/authorize.middleware.js';
+import { PERMISSIONS } from '../config/permissions.js';
 import { CredentialCreateSchema, CredentialUpdateSchema } from '../schemas/credential.schema.js';
 
 const router = express.Router();
@@ -21,35 +22,35 @@ const CREDENTIAL_ID_REMOVE_REMARKS = PREFIX + '/:id/remarks/remove';
 const CREDENTIAL_ID_REMOVE_TAGS = PREFIX + '/:id/tags/remove';
 
 // get all credentials
-router.get(CREDENTIALS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.get(CREDENTIALS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_LIST), async (req, res, next) => {
 
   await credential_controller.get(req, res, next);
 
 });
 
 // get a single credential details by id
-router.get(CREDENTIAL_ID, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.get(CREDENTIAL_ID, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_READ), async (req, res, next) => {
 
   await credential_controller.get(req, res, next);
 
 });
 
 // create a credential
-router.post(CREDENTIALS, authenticate, authorizeRoles('admin'), upload.single('private_key'), validate(CredentialCreateSchema), async (req, res, next) => {
+router.post(CREDENTIALS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_CREATE), upload.single('private_key'), validate(CredentialCreateSchema), async (req, res, next) => {
 
   await credential_controller.create(req, res, next);
 
 });
 
 // update a credential
-router.put(CREDENTIAL_ID, authenticate, authorizeRoles('admin'), upload.single('private_key'), validate(CredentialUpdateSchema), async (req, res, next) => {
+router.put(CREDENTIAL_ID, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_UPDATE), upload.single('private_key'), validate(CredentialUpdateSchema), async (req, res, next) => {
 
   await credential_controller.update(req, res, next);
 
 });
 
 // enable credential
-router.put(CREDENTIAL_ID_ENABLE, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(CREDENTIAL_ID_ENABLE, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_STATUS), async (req, res, next) => {
   req.body = {
     status: true
   };
@@ -57,7 +58,7 @@ router.put(CREDENTIAL_ID_ENABLE, authenticate, authorizeRoles('admin'), async (r
 });
 
 // disable credential
-router.put(CREDENTIAL_ID_DISABLE, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(CREDENTIAL_ID_DISABLE, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_STATUS), async (req, res, next) => {
   req.body = {
     status: false
   };
@@ -65,35 +66,35 @@ router.put(CREDENTIAL_ID_DISABLE, authenticate, authorizeRoles('admin'), async (
 });
 
 // delete credential
-router.delete(CREDENTIAL_ID, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(CREDENTIAL_ID, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_DELETE), async (req, res, next) => {
 
   await credential_controller.delete(req, res, next);
 
 });
 
 // update credential remarks
-router.put(CREDENTIAL_ID_REMARKS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(CREDENTIAL_ID_REMARKS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_UPDATE), async (req, res, next) => {
 
     await credential_controller.setRemarks(req, res, next);
 
 });
 
 // update user role tags
-router.put(CREDENTIAL_ID_TAGS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.put(CREDENTIAL_ID_TAGS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_UPDATE), async (req, res, next) => {
 
     await credential_controller.setTags(req, res, next);
 
 });
 
 // remove credential remarks
-router.delete(CREDENTIAL_ID_REMOVE_REMARKS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(CREDENTIAL_ID_REMOVE_REMARKS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_UPDATE), async (req, res, next) => {
 
     await credential_controller.removeRemarks(req, res, next);
 
 });
 
 // remove credential tags
-router.delete(CREDENTIAL_ID_REMOVE_TAGS, authenticate, authorizeRoles('admin'), async (req, res, next) => {
+router.delete(CREDENTIAL_ID_REMOVE_TAGS, authenticate, authorizePermissions(PERMISSIONS.CREDENTIALS_UPDATE), async (req, res, next) => {
 
     await credential_controller.removeTags(req, res, next);
 

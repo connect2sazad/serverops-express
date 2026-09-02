@@ -19,6 +19,7 @@ module.exports = {
                 status: true,
                 created_at: new Date(),
                 updated_at: new Date(),
+                permissions: ['*']
             },
             {
                 name: 'Manager',
