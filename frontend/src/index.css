@@ -241,6 +241,14 @@ textarea {
   color: white
 }
 
+.txt-red {
+  color: red
+}
+
+.txt-silver {
+  color: silver
+}
+
 .bg-white {
   background-color: white;
 }

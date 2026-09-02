@@ -4,11 +4,11 @@ import {
 
 import { useAuth } from '../hooks/useAuth';
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, permissions = [] }) {
 
     const location = useLocation();
 
-    const { initializing, isAuthenticated } = useAuth();
+    const { initializing, isAuthenticated, hasPermission } = useAuth();
 
     if (initializing) {
         return (
@@ -31,6 +31,13 @@ export default function ProtectedRoute({ children }) {
                 />
             </>
         );
+    }
+
+    if(
+        permissions.length > 0 &&
+        !hasPermission(...permissions)
+    ){
+        return <Navigate to="/forbidden" replace />;
     }
 
     return children;

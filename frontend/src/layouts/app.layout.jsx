@@ -5,20 +5,7 @@ import {
 } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
-
-const primaryNavigation = [
-    {
-        to: '/',
-        label: 'Dashboard',
-        icon: 'bi-speedometer2',
-        end: true,
-    },
-    {
-        to: '/inventories',
-        label: 'Inventories',
-        icon: 'bi-hdd-rack'
-    },
-];
+import primaryNavigation from './navigations';
 
 export default function AppLayout() {
 
@@ -54,7 +41,9 @@ export default function AppLayout() {
                 </div>
 
                 <nav className="nav flex-column gap-1 p-2">
-                    {primaryNavigation.map(
+                    {primaryNavigation
+                    .filter(item => !item.permission || hasPermission(item.permission))
+                    .map(
                         ({
                             to, label, icon,end,
                         }) => (
@@ -73,7 +62,7 @@ export default function AppLayout() {
                         )
                     )}
 
-                    {hasPermission('users.list') && (
+                    {/* {hasPermission('users.list') && (
                         <NavLink to="/users"
                             className={({ isActive }) =>
                                 `sidebar-link ${isActive ? "active" : ""
@@ -86,7 +75,7 @@ export default function AppLayout() {
                                 <span>Users</span>
                             )}
                         </NavLink>
-                    )}
+                    )} */}
                 </nav>
             </aside>
 

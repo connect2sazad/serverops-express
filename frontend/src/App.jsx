@@ -17,16 +17,16 @@ function App() {
 
         <Route path='/login' element={<LoginPage />} />
 
-        <Route path='/forbidden' element={<ForbiddenPage/>} />
+        <Route path='/forbidden' element={<ForbiddenPage />} />
 
         <Route element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
         >
 
-          <Route index element={<DashboardPage />} />
+          <Route index element={<DashboardPage /> } />
 
         </Route>
 
