@@ -5,7 +5,7 @@ import {
 } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
-import primaryNavigation from './navigations';
+import primaryNavigation from '../routes/navigations';
 
 export default function AppLayout() {
 

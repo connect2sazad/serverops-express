@@ -219,6 +219,16 @@ textarea {
   color: white;
 }
 
+.btn-silver-outline {
+  background-color: white;
+  color: silver;
+}
+
+.btn-silver-outline:hover {
+  background-color: silver;
+  color: white;
+}
+
 .btn-red {
   background-color: red;
   color: white;
