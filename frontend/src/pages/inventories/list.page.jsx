@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
+import { PERMISSIONS } from '../../config/permissions';
 import { useAuth } from "../../hooks/useAuth";
 import DataTable from "../../components/data-table";
 import { formatToIST } from '../../components/helpers';
@@ -73,15 +74,16 @@ const createColumns = ({
 
           return (
             <>
-              <Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/command-executions/'}><i className="bi bi-eye"></i>&emsp;Command Executions</Link>
-              <Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/services'}><i className="bi bi-gear"></i>&emsp;Services</Link>
-              <Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/processes'}><i className="bi bi-cpu"></i>&emsp;Processes</Link>
-              <Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-services'}><i className="bi bi-gear-wide-connected"></i>&emsp;Managed Services</Link>
-              <Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-commands'}><i className="bi bi-terminal-split"></i>&emsp;Managed Commands</Link>
-              <Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>
-              {hasPermission('inventories.read') && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix}><i className="bi bi-eye"></i>&emsp;View</Link>)}
-              <Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/edit'}><i className="bi bi-pencil"></i>&emsp;Edit</Link>
-              <button className="m-1 btn btn-sm btn-secondary btn-red"><i className="bi bi-trash"></i>&emsp;Remove</button>
+              {hasPermission(PERMISSIONS.COMMAND_EXECUTIONS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/command-executions/'}><i className="bi bi-eye"></i>&emsp;Command Executions</Link>)}
+              {hasPermission(PERMISSIONS.SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/services'}><i className="bi bi-gear"></i>&emsp;Services</Link>)}
+              {hasPermission(PERMISSIONS.PROCESSES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/processes'}><i className="bi bi-cpu"></i>&emsp;Processes</Link>)}
+              {hasPermission(PERMISSIONS.MANAGED_SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-services'}><i className="bi bi-gear-wide-connected"></i>&emsp;Managed Services</Link>)}
+              {hasPermission(PERMISSIONS.MANAGED_COMMANDS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-commands'}><i className="bi bi-terminal-split"></i>&emsp;Managed Commands</Link>)}
+              {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix}><i className="bi bi-eye"></i>&emsp;View</Link>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/edit'}><i className="bi bi-pencil"></i>&emsp;Edit</Link>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red"><i className="bi bi-trash"></i>&emsp;Remove</button>)}
+              
             </>
           )
         }
@@ -168,6 +170,10 @@ export default function InventoriesListPage() {
         pagination={pagination}
         onPageChange={setPage}
         onRefresh={() => refetch()}
+        onCreate={{
+          permission: hasPermission(PERMISSIONS.INVENTORIES_CREATE),
+          navigateTo: '/inventories/create'
+        }}
       />
 
 
