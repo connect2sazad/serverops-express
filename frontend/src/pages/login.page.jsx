@@ -16,7 +16,7 @@ import {
 
 import { useAuth } from "../hooks/useAuth";
 import { loginSchema } from "../schemas/auth.schema";
-import { getErrorMessage } from "../exceptions/errors";
+import { DetectCapsLock } from "../components/warnings";
 
 
 export default function LoginPage() {
@@ -24,6 +24,7 @@ export default function LoginPage() {
   // navigation objects
   const navigate = useNavigate();
   const location = useLocation();
+  
 
   const {
     login, isAuthenticated, initializing,
@@ -153,7 +154,8 @@ export default function LoginPage() {
                     >
                       Password
                     </label>
-
+                    
+                    <DetectCapsLock>
                     <input
                       id="password"
                       type="password"
@@ -164,6 +166,7 @@ export default function LoginPage() {
                         }`}
                       {...register("password")}
                     />
+                    </DetectCapsLock>
 
                     <div className="invalid-feedback">
                       {errors.password?.message}

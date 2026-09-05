@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
   // `mode` determines which .env file to load.
   // `process.cwd()` gives the current project directory.
   // '' means load all environment variables, not only VITE_* variables.
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, '.', '')
 
   // Return the Vite configuration object.
   return {

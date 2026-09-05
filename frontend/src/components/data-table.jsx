@@ -1,5 +1,3 @@
-import { useNavigate } from "react-router-dom";
-
 function getPageItems(currentPage, totalPages) {
     if (totalPages <= 7) {
         return Array.from(
@@ -63,10 +61,8 @@ export default function DataTable({
     onPageChange,
     onRefresh,
     onCreate,
-    onSearch
+    // onSearch
 }) {
-
-    const navigate = useNavigate();
 
     const getRowKey = row =>
         typeof rowKey === 'function' ? rowKey(row) : row[rowKey];
@@ -77,12 +73,13 @@ export default function DataTable({
 
 
                 <div className="d-flex justify-content-end mb-3">
-                    {/* refresh button */}
-                    {onCreate?.permission && (<button
-                        type="button"
-                        className="mx-1 btn btn-outline-primary btn-blue-outline"
-                        onClick={() => navigate(onCreate?.navigateTo)}
-                    >Create</button>
+                    {/* create button */}
+                    {onCreate && (
+                        <button
+                            type="button"
+                            className="mx-1 btn btn-outline-primary btn-blue-outline"
+                            onClick={onCreate}
+                        >Create</button>
                     )}
                     {/* refresh button */}
                     {onRefresh && (<button
