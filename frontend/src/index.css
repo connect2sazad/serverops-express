@@ -270,3 +270,11 @@ textarea {
 .bg-blue {
   background-color: blue;
 }
+
+.page-size-select {
+    width: 180px;
+}
+
+.page-size-select .form-select {
+    width: 100%;
+}

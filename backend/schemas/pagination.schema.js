@@ -12,5 +12,11 @@ export const PaginationSchema = z.object({
         .min(1)
         .max(100)
         .default(10),
+    
+    search: z.string()
+        .trim()
+        .max(100)
+        .optional()
+        .transform(value => value || undefined),
 
 });

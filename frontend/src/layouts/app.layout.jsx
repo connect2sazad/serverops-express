@@ -33,10 +33,10 @@ export default function AppLayout() {
                 }
             >
                 <div className="sidebar-brand">
-                    <i className="bi bi-server me-2" />
+                    <img src="./icon.svg" style={{height: '25px', width: '25px'}} />
 
                     {sidebarOpen && (
-                        <span>ServerOps</span>
+                        <span>&emsp;ServerOps</span>
                     )}
                 </div>
 

@@ -11,7 +11,7 @@ import DataTable from "../../components/data-table";
 import { formatToIST } from '../../components/helpers';
 
 // apis
-import { inventory_list, inventory_set_status, inventory_create, inventory_update } from '../../api/inventories';
+import { inventory_list, inventory_set_status, inventory_create, inventory_update, inventory_delete } from '../../api/inventories';
 import CreateModal from "./create.modal";
 import ViewModal from "./view.modal";
 import EditModal from "./edit.modal";
@@ -23,7 +23,8 @@ const createColumns = ({
   statusPending,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  deletePending,
 }) => [
     {
       key: 'name',
@@ -54,7 +55,7 @@ const createColumns = ({
         <div className="d-flex align-items-center gap-2">
 
           {hasPermission('inventories.status') ? (
-            
+
             <div className="form-check form-switch mb-0">
               <input type="checkbox" className="form-check-input" role="switch"
                 checked={Boolean(inventory.status)}
@@ -92,7 +93,7 @@ const createColumns = ({
               {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
               {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(inventory)}><i className="bi bi-eye"></i>&emsp;View</button>)}
               {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(inventory)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;Remove</button>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;{ deletePending ? 'Removing...' : 'Remove' }</button>)}
 
             </>
           )
@@ -105,7 +106,7 @@ export default function InventoriesPage() {
   const { confirm } = useConfirmation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const page_size = 10;
+  const [pageSize, setPageSize] = useState(10);
   const [modalOpen, setModalOpen] = useState({
     create: false,
     view: false,
@@ -114,12 +115,23 @@ export default function InventoriesPage() {
     children: false,
   })
   const [selectedInventory, setSelectedInventory] = useState(null);
-  // const [search, setSearch] = useState('');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // set page title
   useEffect(() => {
-    document.title = "Inventories[LIST] | ServerOps";
+    document.title = "Inventories | ServerOps";
   }, []);
+
+  // set search - debounced
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
 
   // Mutations====================================================================|
   const statusMutation = useMutation({
@@ -183,27 +195,16 @@ export default function InventoriesPage() {
       toast.error(getApiError(error).message);
     },
   });
-
   const deleteMutation = useMutation({
-    mutationFn: ({ id, values }) =>
-      inventory_update(id, values),
-
+    mutationFn: id => inventory_delete(id),
     onSuccess: async () => {
-      setModalOpen(previous => ({
-        ...previous,
-        edit: false,
-      }));
-
-      setPage(1);
       setSelectedInventory(null);
-
       await queryClient.invalidateQueries({
         queryKey: ["inventories", user.id],
       });
 
-      toast.success("Inventory updated successfully.");
+      toast.success("Inventory deleted successfully.");
     },
-
     onError: error => {
       toast.error(getApiError(error).message);
     },
@@ -211,35 +212,8 @@ export default function InventoriesPage() {
   // |====================================================================Mutations
 
   const handleStatusChange = async values => {
-    // const { confirmed, inputValue: reason } = await confirm({
-    //   title: values.enabled
-    //     ? "Enable inventory?"
-    //     : "Disable inventory?",
-
-    //   message: values.enabled
-    //     ? "This inventory will become available for ServerOps actions."
-    //     : "This inventory will become unavailable for ServerOps actions.",
-
-    //   confirmLabel: values.enabled ? "Enable" : "Disable",
-
-    //   variant: values.enabled ? "primary" : "danger",
-
-    //   input: {
-    //     label: "Reason",
-    //     placeholder: "Enter a reason.",
-    //     required: true,
-    //     minLength: 3,
-    //     maxLength: 500,
-    //     requiredMessage: "A reason is required.",
-    //     minLengthMessage: "Reason must contain at least 3 characters.",
-    //   },
-    // });
-
-    // if (!confirmed) return;
-
     statusMutation.mutate({
       ...values,
-      // reason,
     });
   };
 
@@ -261,11 +235,30 @@ export default function InventoriesPage() {
     }))
   };
 
-  const handleDelete = (inventory) => {
-    setSelectedInventory(inventory);
+  const handleDelete = async inventory => {
+    const { confirmed } = await confirm({
+      title: "Delete inventory?",
+      message: (
+        <>
+          You are about to delete {" "}
+          <strong>{inventory.name}</strong>.
+          <br />
+          This action cannot be undone.
+        </>
+      ),
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
 
-    deleteMutation();
+    if(!confirmed) return;
+
+    deleteMutation.mutate(inventory.id);
   };
+
+  const handlePageSize = newPageSize =>{
+    setPageSize(newPageSize),
+    setPage(1);
+  }
 
   const columns = createColumns({
     hasPermission,
@@ -274,6 +267,7 @@ export default function InventoriesPage() {
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    deletePending: deleteMutation.isPending,
   });
 
   // call inventories list api using useQuery
@@ -285,11 +279,12 @@ export default function InventoriesPage() {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['inventories', user.id, page, page_size],
+    queryKey: ['inventories', user.id, page, pageSize, debouncedSearch],
 
     queryFn: () => inventory_list({
       page,
-      page_size
+      page_size: pageSize,
+      search: debouncedSearch,
     }),
 
     retry: false,
@@ -322,6 +317,9 @@ export default function InventoriesPage() {
         emptyMessage="No inventories found!"
         pagination={pagination}
         onPageChange={setPage}
+        pageSize={pageSize}
+        pageSizeOptions={[5, 10, 15, 25, 50, 75, 100]}
+        onPageSizeChange={handlePageSize}
         onRefresh={() => refetch()}
         {...(hasPermission(PERMISSIONS.INVENTORIES_CREATE) && {
           onCreate: () => {
@@ -331,7 +329,8 @@ export default function InventoriesPage() {
             }));
           }
         })}
-
+        onSearch={setSearch}
+        searchValue={search}
       />
 
       <CreateModal

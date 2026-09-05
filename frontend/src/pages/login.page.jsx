@@ -97,7 +97,7 @@ export default function LoginPage() {
               <div className="p-4 p-md-5">
                 <div className="text-center mb-4">
                   <div className="fs-1">
-                    <i className="bi bi-server txt-blue" />
+                    <img src="./icon.svg" style={{height: '100px', width: '100px'}} />
                   </div>
 
                   <h1 className="h3 fw-bold txt-blue">

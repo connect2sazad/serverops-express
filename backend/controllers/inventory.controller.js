@@ -24,6 +24,16 @@ export class InventoryController extends BaseController {
                     as: 'creator',
                 }
             ],
+            searchFields: [
+                'name',
+                'hostname',
+                'environment',
+                'operating_system',
+                'description',
+                'remarks',
+                'discovered_hostname',
+                'os_name'
+            ]
         });
     }
 

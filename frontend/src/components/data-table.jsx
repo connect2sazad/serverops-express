@@ -59,9 +59,13 @@ export default function DataTable({
     emptyMessage = 'No records found!',
     pagination,
     onPageChange,
+    pageSize = 10,
+    pageSizeOptions = [5, 10, 25, 50, 100],
+    onPageSizeChange,
     onRefresh,
     onCreate,
-    // onSearch
+    onSearch,
+    searchValue = "",
 }) {
 
     const getRowKey = row =>
@@ -72,27 +76,77 @@ export default function DataTable({
             <div className="card-body">
 
 
-                <div className="d-flex justify-content-end mb-3">
-                    {/* create button */}
-                    {onCreate && (
-                        <button
-                            type="button"
-                            className="mx-1 btn btn-outline-primary btn-blue-outline"
-                            onClick={onCreate}
-                        >Create</button>
-                    )}
-                    {/* refresh button */}
-                    {onRefresh && (<button
-                        type="button"
-                        className="mx-1 btn btn-outline-primary btn-blue-outline"
-                        onClick={onRefresh}
-                        disabled={loading || refreshing}
-                    >
-                        {
-                            loading || refreshing ? 'Loading...' : 'Refresh'
-                        }
-                    </button>
-                    )}
+                <div className="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+                    <div className="d-flex flex-wrap align-items-end gap-3">
+                        {onPageSizeChange && (
+                            <div className="form-floating page-size-select">
+                                <select
+                                    id="table-page-size"
+                                    className="form-select"
+                                    value={pageSize}
+                                    disabled={loading || refreshing}
+                                    onChange={event =>
+                                        onPageSizeChange(Number(event.target.value))
+                                    }
+                                >
+                                    {pageSizeOptions.map(size => (
+                                        <option key={size} value={size}>
+                                            {size}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <label htmlFor="table-page-size">
+                                    Records per page
+                                </label>
+                            </div>
+                        )}
+
+                        {onSearch && (
+                            <div className="form-floating">
+                                <input
+                                    id="table-record-search"
+                                    type="search"
+                                    className="form-control"
+                                    value={searchValue}
+                                    placeholder="Search records..."
+                                    autoComplete="off"
+                                    onChange={event =>
+                                        onSearch(event.target.value)
+                                    }
+                                />
+
+                                <label htmlFor="table-record-search">
+                                    Search
+                                </label>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        {onCreate && (
+                            <button
+                                type="button"
+                                className="mx-1 btn btn-outline-primary btn-blue-outline"
+                                onClick={onCreate}
+                            >
+                                Create
+                            </button>
+                        )}
+
+                        {onRefresh && (
+                            <button
+                                type="button"
+                                className="mx-1 btn btn-outline-primary btn-blue-outline"
+                                onClick={onRefresh}
+                                disabled={loading || refreshing}
+                            >
+                                {loading || refreshing
+                                    ? "Loading..."
+                                    : "Refresh"}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* display data */}

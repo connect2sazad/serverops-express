@@ -1,16 +1,19 @@
+import { Op } from 'sequelize';
+
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
 import { PaginationSchema } from '../schemas/pagination.schema.js';
 
 class BaseController {
 
-    constructor(model, { schema = null, createSchema = null, updateSchema = null, creator = false, includes = null } = {}) {
+    constructor(model, { schema = null, createSchema = null, updateSchema = null, creator = false, includes = null, searchFields = [] } = {}) {
         this.model = model;
         this.schema = schema;
         this.createSchema = createSchema;
         this.updateSchema = updateSchema;
         this.creator = creator;
         this.includes = includes;
+        this.searchFields = searchFields;
     }
 
     serialize(record, schema = this.schema) {
@@ -103,7 +106,7 @@ class BaseController {
                 );
             }
 
-            const { page, page_size } = validation.data;
+            const { page, page_size, search } = validation.data;
 
             // get offset/no of records to skip
             const offset = (page - 1) * page_size;
@@ -115,9 +118,29 @@ class BaseController {
                 );
             }
 
+            // search criteria
+            const searchCondition = search && this.searchFields.length > 0
+                ? {
+                    [Op.or]: this.searchFields.map(field => ({
+                        [field]: {
+                            [Op.like]: `%${search}%`
+                        },
+                    })),
+                }
+                : null;
+            
+                const finalWhere = searchCondition
+                    ? {
+                        [Op.and]: [
+                            where,
+                            searchCondition
+                        ]
+                    }
+                    : where;
+
             // retrieve this page & count all matching records
             const { count, rows } = await this.model.findAndCountAll({
-                where,
+                where: finalWhere,
                 include: this.includes,
                 distinct: Boolean(this.includes),
                 order: [
