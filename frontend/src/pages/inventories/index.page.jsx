@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
+import { getApiError } from "../../api/api-error";
 import { PERMISSIONS } from '../../config/permissions';
 import { useAuth } from "../../hooks/useAuth";
+import useConfirmation from '../../hooks/useConfirmation';
+import useToast from '../../hooks/useToast';
 import DataTable from "../../components/data-table";
 import { formatToIST } from '../../components/helpers';
 
@@ -97,6 +100,8 @@ const createColumns = ({
 
 export default function InventoriesPage() {
   const { user, hasPermission } = useAuth();
+  const { confirm } = useConfirmation();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const page_size = 10;
@@ -115,33 +120,51 @@ export default function InventoriesPage() {
     document.title = "Inventories[LIST] | ServerOps";
   }, []);
 
-  // Mutations====================================================================
+  // Mutations====================================================================|
   const statusMutation = useMutation({
     mutationFn: ({ id, enabled }) => inventory_set_status(id, enabled),
-    onSuccess: () => queryClient.invalidateQueries({
-      queryKey: ['inventories', user.id]
-    }),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['inventories', user.id]
+      });
+
+      toast.success(
+        variables.enabled
+          ? "Inventory enabled successfully."
+          : "Inventory disabled successfully."
+      );
+    },
+    onError: e => toast.error(getApiError(error).message)
   });
   const createMutation = useMutation({
     mutationFn: values => inventory_create(values),
+
     onSuccess: async () => {
-      setModalOpen(prev => ({
-        ...prev,
+      setModalOpen(previous => ({
+        ...previous,
         create: false,
       }));
 
       setPage(1);
 
       await queryClient.invalidateQueries({
-        queryKey: ['inventories', user.id]
+        queryKey: ["inventories", user.id],
       });
+
+      toast.success("Inventory created successfully.");
+    },
+
+    onError: error => {
+      toast.error(getApiError(error).message);
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({id, values}) => inventory_update(id, values),
+    mutationFn: ({ id, values }) =>
+      inventory_update(id, values),
+
     onSuccess: async () => {
-      setModalOpen(prev => ({
-        ...prev,
+      setModalOpen(previous => ({
+        ...previous,
         edit: false,
       }));
 
@@ -149,10 +172,47 @@ export default function InventoriesPage() {
       setSelectedInventory(null);
 
       await queryClient.invalidateQueries({
-        queryKey: ['inventories', user.id]
+        queryKey: ["inventories", user.id],
       });
+
+      toast.success("Inventory updated successfully.");
+    },
+
+    onError: error => {
+      toast.error(getApiError(error).message);
     },
   });
+  // |====================================================================Mutations
+
+  const handleStatusChange = async values => {
+    const { confirmed, inputValue: reason } = await confirm({
+      title: values.enabled
+        ? "Enable inventory?"
+        : "Disable inventory?",
+
+      message: values.enabled
+        ? "This inventory will become available for ServerOps actions."
+        : "This inventory will become unavailable for ServerOps actions.",
+
+      confirmLabel: values.enabled ? "Enable" : "Disable",
+
+      variant: values.enabled ? "primary" : "danger",
+
+      input: {
+        label: "Reason",
+        placeholder: "Enter an optional reason.",
+        required: false,
+        maxLength: 500,
+      },
+    });
+
+    if (!confirmed) return;
+
+    statusMutation.mutate({
+      ...values,
+      reason,
+    });
+  };
 
   const handleView = (inventory) => {
     setSelectedInventory(inventory);
@@ -174,7 +234,7 @@ export default function InventoriesPage() {
 
   const columns = createColumns({
     hasPermission,
-    onStatusChange: values => statusMutation.mutate(values),
+    onStatusChange: handleStatusChange,
     statusPending: statusMutation.isPending,
     onView: handleView,
     onEdit: handleEdit
@@ -213,14 +273,6 @@ export default function InventoriesPage() {
 
         <p className="text-secondary txt-silver mb-0">Available inventories</p>
       </div>
-
-
-      {statusMutation.isError && (
-        <div className="alert alert-danger" role="alert">
-          {statusMutation.error?.response?.data?.message ||
-            'Unable to update inventory status. Please try again.'}
-        </div>
-      )}
 
 
       <DataTable

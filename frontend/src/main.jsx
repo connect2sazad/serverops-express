@@ -4,6 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import AuthProvider from "./auth/AuthProvider.jsx";
+import ConfirmationProvider from './components/ConfirmationProvider.jsx';
+import ToastProvider from './components/ToastProvider.jsx';
 
 import { Tooltip } from "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -31,7 +33,11 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <ToastProvider>
+            <ConfirmationProvider>
+              <App />
+            </ConfirmationProvider>
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
