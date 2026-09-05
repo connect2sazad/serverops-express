@@ -67,3 +67,21 @@ export async function inventory_update(id, data) {
 
     return response.data.data;
 }
+
+export async function inventory_delete(id, data) {
+
+    const payload = {
+        ...data,
+        operating_system: data.operating_system?.trim() || null,
+        description: data.description?.trim() || null,
+        remarks: data.remarks?.trim() || null,
+        tags: Array.isArray(data.tags) ? data.tags : [],
+    };
+
+    const response = await apiClient.delete(
+        `/inventories/${id}`,
+        payload
+    );
+
+    return response.data.data;
+}

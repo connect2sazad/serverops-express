@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { toast } from "react-toastify";
 
 import { getApiError } from "../../api/api-error";
 import { PERMISSIONS } from '../../config/permissions';
 import { useAuth } from "../../hooks/useAuth";
 import useConfirmation from '../../hooks/useConfirmation';
-import useToast from '../../hooks/useToast';
 import DataTable from "../../components/data-table";
 import { formatToIST } from '../../components/helpers';
 
@@ -23,6 +23,7 @@ const createColumns = ({
   statusPending,
   onView,
   onEdit,
+  onDelete
 }) => [
     {
       key: 'name',
@@ -52,22 +53,23 @@ const createColumns = ({
       render: inventory => (
         <div className="d-flex align-items-center gap-2">
 
-          <span className={`badge ${inventory.status ? 'bg-blue' : 'bg-red'}`}>{inventory.status ? 'Active' : 'Inactive'}</span>
-
-          {hasPermission('inventories.status') && (
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-secondary btn-silver-outline"
-              disabled={statusPending}
-              aria-label={`${inventory.status ? 'Disable' : 'Enable'
-                } inventory ${inventory.name}`}
-              onClick={() => {
-                onStatusChange({
-                  id: inventory.id,
-                  enabled: !inventory.status
-                })
-              }}
-            > {inventory.status ? 'Disable' : 'Enable'}</button>
+          {hasPermission('inventories.status') ? (
+            
+            <div className="form-check form-switch mb-0">
+              <input type="checkbox" className="form-check-input" role="switch"
+                checked={Boolean(inventory.status)}
+                disabled={statusPending}
+                aria-label={`${inventory.status ? 'Disable' : 'Enable'}`}
+                onChange={() => {
+                  onStatusChange({
+                    id: inventory.id,
+                    enabled: !inventory.status
+                  });
+                }}
+              />
+            </div>
+          ) : (
+            <span className={`badge ${inventory.status ? 'bg-blue' : 'bg-red'}`}>{inventory.status ? 'Active' : 'Inactive'}</span>
           )}
         </div>
       ),
@@ -90,7 +92,7 @@ const createColumns = ({
               {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
               {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(inventory)}><i className="bi bi-eye"></i>&emsp;View</button>)}
               {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(inventory)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red"><i className="bi bi-trash"></i>&emsp;Remove</button>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;Remove</button>)}
 
             </>
           )
@@ -101,7 +103,6 @@ const createColumns = ({
 export default function InventoriesPage() {
   const { user, hasPermission } = useAuth();
   const { confirm } = useConfirmation();
-  const toast = useToast();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const page_size = 10;
@@ -130,11 +131,11 @@ export default function InventoriesPage() {
 
       toast.success(
         variables.enabled
-          ? "Inventory enabled successfully."
+          ? `Inventory enabled successfully.`
           : "Inventory disabled successfully."
       );
     },
-    onError: e => toast.error(getApiError(error).message)
+    onError: e => toast.error(getApiError(e).message)
   });
   const createMutation = useMutation({
     mutationFn: values => inventory_create(values),
@@ -182,35 +183,63 @@ export default function InventoriesPage() {
       toast.error(getApiError(error).message);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, values }) =>
+      inventory_update(id, values),
+
+    onSuccess: async () => {
+      setModalOpen(previous => ({
+        ...previous,
+        edit: false,
+      }));
+
+      setPage(1);
+      setSelectedInventory(null);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["inventories", user.id],
+      });
+
+      toast.success("Inventory updated successfully.");
+    },
+
+    onError: error => {
+      toast.error(getApiError(error).message);
+    },
+  });
   // |====================================================================Mutations
 
   const handleStatusChange = async values => {
-    const { confirmed, inputValue: reason } = await confirm({
-      title: values.enabled
-        ? "Enable inventory?"
-        : "Disable inventory?",
+    // const { confirmed, inputValue: reason } = await confirm({
+    //   title: values.enabled
+    //     ? "Enable inventory?"
+    //     : "Disable inventory?",
 
-      message: values.enabled
-        ? "This inventory will become available for ServerOps actions."
-        : "This inventory will become unavailable for ServerOps actions.",
+    //   message: values.enabled
+    //     ? "This inventory will become available for ServerOps actions."
+    //     : "This inventory will become unavailable for ServerOps actions.",
 
-      confirmLabel: values.enabled ? "Enable" : "Disable",
+    //   confirmLabel: values.enabled ? "Enable" : "Disable",
 
-      variant: values.enabled ? "primary" : "danger",
+    //   variant: values.enabled ? "primary" : "danger",
 
-      input: {
-        label: "Reason",
-        placeholder: "Enter an optional reason.",
-        required: false,
-        maxLength: 500,
-      },
-    });
+    //   input: {
+    //     label: "Reason",
+    //     placeholder: "Enter a reason.",
+    //     required: true,
+    //     minLength: 3,
+    //     maxLength: 500,
+    //     requiredMessage: "A reason is required.",
+    //     minLengthMessage: "Reason must contain at least 3 characters.",
+    //   },
+    // });
 
-    if (!confirmed) return;
+    // if (!confirmed) return;
 
     statusMutation.mutate({
       ...values,
-      reason,
+      // reason,
     });
   };
 
@@ -232,12 +261,19 @@ export default function InventoriesPage() {
     }))
   };
 
+  const handleDelete = (inventory) => {
+    setSelectedInventory(inventory);
+
+    deleteMutation();
+  };
+
   const columns = createColumns({
     hasPermission,
     onStatusChange: handleStatusChange,
     statusPending: statusMutation.isPending,
     onView: handleView,
-    onEdit: handleEdit
+    onEdit: handleEdit,
+    onDelete: handleDelete,
   });
 
   // call inventories list api using useQuery

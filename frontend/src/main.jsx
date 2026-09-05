@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import AuthProvider from "./auth/AuthProvider.jsx";
 import ConfirmationProvider from './components/ConfirmationProvider.jsx';
-import ToastProvider from './components/ToastProvider.jsx';
+import { ToastContainer } from "react-toastify";
 
 import { Tooltip } from "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -33,11 +33,21 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <ToastProvider>
-            <ConfirmationProvider>
-              <App />
-            </ConfirmationProvider>
-          </ToastProvider>
+          <ConfirmationProvider>
+            <App />
+            <ToastContainer
+              position="top-right"
+              autoClose={4000}
+              newestOnTop
+              closeOnClick
+              pauseOnFocusLoss
+              pauseOnHover
+              draggable
+              theme="colored"
+              limit={4}
+            />
+          </ConfirmationProvider>
+
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
