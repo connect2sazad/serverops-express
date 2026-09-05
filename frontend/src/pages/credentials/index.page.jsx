@@ -8,10 +8,9 @@ import { PERMISSIONS } from '../../config/permissions';
 import { useAuth } from "../../hooks/useAuth";
 import useConfirmation from '../../hooks/useConfirmation';
 import DataTable from "../../components/data-table";
-import { formatToIST } from '../../components/helpers';
 
 // apis
-import { inventory_list, inventory_set_status, inventory_create, inventory_update, inventory_delete } from '../../api/inventories';
+import { credential_list, credential_set_status, credential_create, credential_update, credential_delete } from '../../api/credentials';
 import CreateModal from "./create.modal";
 import ViewModal from "./view.modal";
 import EditModal from "./edit.modal";
@@ -27,81 +26,69 @@ const createColumns = ({
   deletePending,
 }) => [
     {
-      key: 'name',
-      label: 'Name'
+      key: 'username',
+      label: 'Username'
     },
     {
-      key: 'hostname',
-      label: 'Host',
-      render: inventory => `${inventory.hostname}:${inventory.ssh_port}`
+      key: 'type',
+      label: 'Type',
+      render: credential => (<div className="text-uppercase">{credential.type.replace('-', ' ')}</div>)
     },
     {
-      key: 'environment',
-      label: 'Environment'
+      key: 'passphrase',
+      label: 'Passphrase',
+      render: credential => (<span className={`${credential.passphrase ? 'badge bg-blue' : ''}`}>{credential.passphrase ? 'Present' : '—'}</span>)
     },
     {
-      key: 'operating_system',
-      label: 'OS'
-    },
-    {
-      key: 'last_connected_at',
-      label: 'Last Connected',
-      render: inventory => formatToIST(inventory.last_connected_at)
+      key: 'credential',
+      label: 'Inventory Hostname',
+      render: credential => credential.inventory.hostname
     },
     {
       key: 'status',
       label: 'Status',
-      render: inventory => (
+      render: credential => (
         <div className="d-flex align-items-center gap-2">
 
-          {hasPermission('inventories.status') ? (
+          {hasPermission('credentials.status') ? (
 
             <div className="form-check form-switch mb-0">
               <input type="checkbox" className="form-check-input" role="switch"
-                checked={Boolean(inventory.status)}
+                checked={Boolean(credential.status)}
                 disabled={statusPending}
-                aria-label={`${inventory.status ? 'Disable' : 'Enable'}`}
+                aria-label={`${credential.status ? 'Disable' : 'Enable'}`}
                 onChange={() => {
                   onStatusChange({
-                    id: inventory.id,
-                    enabled: !inventory.status
+                    id: credential.id,
+                    enabled: !credential.status
                   });
                 }}
               />
             </div>
           ) : (
-            <span className={`badge ${inventory.status ? 'bg-blue' : 'bg-red'}`}>{inventory.status ? 'Active' : 'Inactive'}</span>
+            <span className={`badge ${credential.status ? 'bg-blue' : 'bg-red'}`}>{credential.status ? 'Active' : 'Inactive'}</span>
           )}
         </div>
       ),
     },
     {
       key: 'id',
-      label: 'Operations & Actions',
+      label: 'Actions',
       render:
-        inventory => {
-
-          const link_prefix = `/inventories/${inventory.id}`;
+        credential => {
 
           return (
             <>
-              {hasPermission(PERMISSIONS.COMMAND_EXECUTIONS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/command-executions/'}><i className="bi bi-eye"></i>&emsp;Command Executions</Link>)}
-              {hasPermission(PERMISSIONS.SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/services'}><i className="bi bi-gear"></i>&emsp;Services</Link>)}
-              {hasPermission(PERMISSIONS.PROCESSES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/processes'}><i className="bi bi-cpu"></i>&emsp;Processes</Link>)}
-              {hasPermission(PERMISSIONS.MANAGED_SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-services'}><i className="bi bi-gear-wide-connected"></i>&emsp;Managed Services</Link>)}
-              {hasPermission(PERMISSIONS.MANAGED_COMMANDS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-commands'}><i className="bi bi-terminal-split"></i>&emsp;Managed Commands</Link>)}
-              {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(inventory)}><i className="bi bi-eye"></i>&emsp;View</button>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(inventory)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;{ deletePending ? 'Removing...' : 'Remove' }</button>)}
-
+              {hasPermission(PERMISSIONS.CREDENTIALS_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(credential)}><i className="bi bi-eye"></i>&emsp;View</button>)}
+              {hasPermission(PERMISSIONS.CREDENTIALS_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(credential)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
+              {hasPermission(PERMISSIONS.CREDENTIALS_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(credential)}><i className="bi bi-trash"></i>&emsp;{ deletePending ? 'Removing...' : 'Remove' }</button>)}
             </>
           )
         }
     },
   ]
 
-export default function InventoriesPage() {
+export default function CredentialsPage() {
   const { user, hasPermission } = useAuth();
   const { confirm } = useConfirmation();
   const queryClient = useQueryClient();
@@ -114,13 +101,13 @@ export default function InventoriesPage() {
     confirm: false,
     children: false,
   })
-  const [selectedInventory, setSelectedInventory] = useState(null);
+  const [selectedCredential, setSelectedCredential] = useState(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // set page title
   useEffect(() => {
-    document.title = "Inventories | ServerOps";
+    document.title = "Credentials | ServerOps";
   }, []);
 
   // set search - debounced
@@ -135,22 +122,22 @@ export default function InventoriesPage() {
 
   // Mutations====================================================================|
   const statusMutation = useMutation({
-    mutationFn: ({ id, enabled }) => inventory_set_status(id, enabled),
+    mutationFn: ({ id, enabled }) => credential_set_status(id, enabled),
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: ['inventories', user.id]
+        queryKey: ['credentials', user.id]
       });
 
       toast.success(
         variables.enabled
-          ? `Inventory enabled successfully.`
-          : "Inventory disabled successfully."
+          ? `Credential enabled successfully.`
+          : "Credential disabled successfully."
       );
     },
     onError: e => toast.error(getApiError(e).message)
   });
   const createMutation = useMutation({
-    mutationFn: values => inventory_create(values),
+    mutationFn: values => credential_create(values),
 
     onSuccess: async () => {
       setModalOpen(previous => ({
@@ -161,10 +148,10 @@ export default function InventoriesPage() {
       setPage(1);
 
       await queryClient.invalidateQueries({
-        queryKey: ["inventories", user.id],
+        queryKey: ["credentials", user.id],
       });
 
-      toast.success("Inventory created successfully.");
+      toast.success("Credential created successfully.");
     },
 
     onError: error => {
@@ -173,7 +160,7 @@ export default function InventoriesPage() {
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, values }) =>
-      inventory_update(id, values),
+      credential_update(id, values),
 
     onSuccess: async () => {
       setModalOpen(previous => ({
@@ -182,13 +169,13 @@ export default function InventoriesPage() {
       }));
 
       setPage(1);
-      setSelectedInventory(null);
+      setSelectedCredential(null);
 
       await queryClient.invalidateQueries({
-        queryKey: ["inventories", user.id],
+        queryKey: ["credentials", user.id],
       });
 
-      toast.success("Inventory updated successfully.");
+      toast.success("Credential updated successfully.");
     },
 
     onError: error => {
@@ -196,14 +183,14 @@ export default function InventoriesPage() {
     },
   });
   const deleteMutation = useMutation({
-    mutationFn: id => inventory_delete(id),
+    mutationFn: id => credential_delete(id),
     onSuccess: async () => {
-      setSelectedInventory(null);
+      setSelectedCredential(null);
       await queryClient.invalidateQueries({
-        queryKey: ["inventories", user.id],
+        queryKey: ["credentials", user.id],
       });
 
-      toast.success("Inventory deleted successfully.");
+      toast.success("Credential deleted successfully.");
     },
     onError: error => {
       toast.error(getApiError(error).message);
@@ -217,8 +204,8 @@ export default function InventoriesPage() {
     });
   };
 
-  const handleView = (inventory) => {
-    setSelectedInventory(inventory);
+  const handleView = (credential) => {
+    setSelectedCredential(credential);
 
     setModalOpen((prev) => ({
       ...prev,
@@ -226,8 +213,8 @@ export default function InventoriesPage() {
     }))
   };
 
-  const handleEdit = (inventory) => {
-    setSelectedInventory(inventory);
+  const handleEdit = (credential) => {
+    setSelectedCredential(credential);
 
     setModalOpen((prev) => ({
       ...prev,
@@ -235,13 +222,13 @@ export default function InventoriesPage() {
     }))
   };
 
-  const handleDelete = async inventory => {
+  const handleDelete = async credential => {
     const { confirmed } = await confirm({
-      title: "Delete inventory?",
+      title: "Delete credential?",
       message: (
         <>
           You are about to delete {" "}
-          <strong>{inventory.name}</strong>.
+          <strong>{credential.username}</strong>.
           <br />
           This action cannot be undone.
         </>
@@ -252,7 +239,7 @@ export default function InventoriesPage() {
 
     if(!confirmed) return;
 
-    deleteMutation.mutate(inventory.id);
+    deleteMutation.mutate(credential.id);
   };
 
   const handlePageSizeChange = newPageSize => {
@@ -270,7 +257,7 @@ export default function InventoriesPage() {
     deletePending: deleteMutation.isPending,
   });
 
-  // call inventories list api using useQuery
+  // call credentials list api using useQuery
   const {
     data,
     isPending,
@@ -279,9 +266,9 @@ export default function InventoriesPage() {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['inventories', user.id, page, pageSize, debouncedSearch],
+    queryKey: ['credentials', user.id, page, pageSize, debouncedSearch],
 
-    queryFn: () => inventory_list({
+    queryFn: () => credential_list({
       page,
       page_size: pageSize,
       search: debouncedSearch,
@@ -293,35 +280,35 @@ export default function InventoriesPage() {
   });
 
   // separate pagination and data
-  const inventories = data?.data || [];
+  const credentials = data?.data || [];
   const pagination = data?.pagination;
 
   return (
     <>
       <div className="mb-4">
 
-        <h1 className="txt-blue h3 fw-bold mb-1">Inventories</h1>
+        <h1 className="txt-blue h3 fw-bold mb-1">Credentials</h1>
 
-        <p className="text-secondary txt-silver mb-0">Available inventories</p>
+        <p className="text-secondary txt-silver mb-0">Available credentials</p>
       </div>
 
 
       <DataTable
         columns={columns}
-        rows={inventories}
+        rows={credentials}
         loading={isPending}
         refreshing={isFetching}
         error={
-          isError ? error?.response?.data?.message || 'Unable to load Inventories.' : ''
+          isError ? error?.response?.data?.message || 'Unable to load Credentials.' : ''
         }
-        emptyMessage="No inventories found!"
+        emptyMessage="No credentials found!"
         pagination={pagination}
         onPageChange={setPage}
         pageSize={pageSize}
         pageSizeOptions={[5, 10, 15, 25, 50, 75, 100]}
         onPageSizeChange={handlePageSizeChange}
         onRefresh={() => refetch()}
-        {...(hasPermission(PERMISSIONS.INVENTORIES_CREATE) && {
+        {...(hasPermission(PERMISSIONS.CREDENTIALS_CREATE) && {
           onCreate: () => {
             setModalOpen((prev) => ({
               ...prev,
@@ -333,7 +320,7 @@ export default function InventoriesPage() {
         searchValue={search}
       />
 
-      <CreateModal
+      {/* <CreateModal
         open={modalOpen.create}
         submitting={createMutation.isPending}
         error={
@@ -351,11 +338,11 @@ export default function InventoriesPage() {
         }}
         onSubmit={values => createMutation.mutate(values)
         }
-      />
+      /> */}
 
-      <EditModal
+      {/* <EditModal
         open={modalOpen.edit}
-        inventoryId={selectedInventory?.id}
+        credentialId={selectedCredential?.id}
         submitting={updateMutation.isPending}
         error={
           updateMutation.isError ? updateMutation.error : null
@@ -370,24 +357,24 @@ export default function InventoriesPage() {
             edit: false,
           }));
 
-          setSelectedInventory(null);
+          setSelectedCredential(null);
         }}
         onSubmit={values => updateMutation.mutate({
-          id: selectedInventory.id,
+          id: selectedCredential.id,
           values,
         })
         }
-      />
+      /> */}
 
       <ViewModal
         open={modalOpen.view}
-        inventoryId={selectedInventory?.id}
+        credentialId={selectedCredential?.id}
         onClose={() => {
           setModalOpen(prev => ({
             ...prev,
             view: false
           }));
-          setSelectedInventory(null);
+          setSelectedCredential(null);
         }}
       />
 

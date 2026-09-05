@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { credential_read } from "../../api/credentials";
 import { inventory_read } from "../../api/inventories";
-import { formatToIST } from "../../components/helpers";
 
 function Detail({ label, children }) {
     return (
@@ -20,19 +20,19 @@ function Detail({ label, children }) {
 
 export default function ViewModal({
     open,
-    inventoryId,
+    credentialId,
     onClose,
 }) {
 
     const {
-        data: inventory,
+        data: credential,
         isPending,
         isError,
         error
     } = useQuery({
-        queryKey: ['inventory', inventoryId],
-        queryFn: () => inventory_read(inventoryId),
-        enabled: open && Boolean(inventoryId),
+        queryKey: ['credential', credentialId],
+        queryFn: () => credential_read(credentialId),
+        enabled: open && Boolean(credentialId),
         retry: false,
     });
 
@@ -58,7 +58,7 @@ export default function ViewModal({
 
     return (
         <>
-            <div className="modal d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="inventory-title" onMouseDown={event => {
+            <div className="modal d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="credential-title" onMouseDown={event => {
                 if (event.target === event.currentTarget) {
                     onClose();
                 }
@@ -67,7 +67,7 @@ export default function ViewModal({
                 <div className="modal-dialog modal-lg modal-dialog-centered">
                     <div className="modal-content shadow">
                         <div className="modal-header">
-                            <h2 id="inventory-title" className="modal-title fs-5">Inventory Details</h2>
+                            <h2 id="credential-title" className="modal-title fs-5">Credential Details</h2>
                             <button type="button" className="btn-close" aria-label="Close" onClick={onClose} />
                         </div>
 
@@ -76,51 +76,40 @@ export default function ViewModal({
                             {isPending ? (
                                 <div className="d-flex align-items-center gap-2" role="status">
                                     <div className="spinner-border spinner-border-sm" aria-hidden="true" />
-                                    <span>Loading inventory details...</span>
+                                    <span>Loading credential details...</span>
                                 </div>
                             ) : isError ? (
                                 <div className="alert alert-danger mb-0" role="alert">
-                                    {error?.response?.data?.message || 'Unable to load inventory details.'}
+                                    {error?.response?.data?.message || 'Unable to load credential details.'}
                                 </div>
                             ) : (
                                 <>
                                     <div className="mb-4">
 
-                                        <h3 className="h4 mb-1">{inventory.name}&emsp;
+                                        <h3 className="h4 mb-1">{credential.username}&emsp;
 
                                             <span
-                                                className={`fs-6 badge ${inventory.status ? 'bg-blue' : 'bg-red'}`}
+                                                className={`fs-6 badge ${credential.status ? 'bg-blue' : 'bg-red'}`}
                                             >
-                                                {inventory.status ? 'Active' : 'Inactive'}
+                                                {credential.status ? 'Active' : 'Inactive'}
                                             </span>
                                         </h3>
 
                                     </div>
 
                                     <dl className="row mb-0">
-                                        <Detail label="Hostname">{inventory.hostname}</Detail>
-                                        <Detail label="SSH Port">{inventory.ssh_port}</Detail>
-                                        <Detail label="Environment">{inventory.environment}</Detail>
-                                        {inventory.last_connected_at && (<Detail label="Last Connected At">{formatToIST(inventory.last_connected_at)}</Detail>)}
-                                        {inventory.operating_system && (<Detail label="Operating System">{inventory.operating_system}</Detail>)}
-                                        {inventory.description && (<Detail label="Description">{inventory.description}</Detail>)}
-                                        {inventory.discovered_hostname && (<Detail label="Discovered Hostname">{inventory.discovered_hostname}</Detail>)}
-                                        {inventory.os_name && (<Detail label="OS Name">{inventory.os_name}</Detail>)}
-                                        {inventory.os_version && (<Detail label="OS Version">{inventory.os_version}</Detail>)}
-                                        {inventory.os_version_id && (<Detail label="OS Version ID">{inventory.os_version_id}</Detail>)}
-                                        {inventory.kernel && (<Detail label="Kernel">{inventory.kernel}</Detail>)}
-                                        {inventory.architecture && (<Detail label="Architecture">{inventory.architecture}</Detail>)}
-                                        {inventory.cpu_cores && (<Detail label="CPU Cores">{inventory.cpu_cores}</Detail>)}
-                                        {inventory.memory_total_kib && (<Detail label="Total Memory">{inventory.memory_total_kib} KiB</Detail>)}
-                                        {inventory.uptime_seconds && (<Detail label="Uptime">{inventory.uptime_seconds} seconds</Detail>)}
-                                        {inventory.remarks && (<Detail label="Remarks">{inventory.remarks}</Detail>)}
+                                        {credential.type && (<Detail label="Credential Type"><span className="text-uppercase">{credential.type}</span></Detail>)}
+                                        {credential.passphrase && (<Detail label="Passphrase">Present</Detail>)}
+                                        {credential.inventory.hostname && (<Detail label="Inventory">{credential.inventory.hostname}</Detail>)}
+                                        {credential.remarks && (<Detail label="Remarks">{credential.remarks}</Detail>)}
+                                        {credential.creator.userid && (<Detail label="Creator">@{credential.creator.userid}</Detail>)}
 
                                         {
-                                            Array.isArray(inventory.tags) &&
-                                            inventory.tags.length > 0 && (
+                                            Array.isArray(credential.tags) &&
+                                            credential.tags.length > 0 && (
                                                 <Detail label="Tags">
                                                     <div className="d-flex flex-wrap gap-1">
-                                                        {inventory.tags.map(tag => (
+                                                        {credential.tags.map(tag => (
                                                             <span className="badge rounded-pill bg-blue" key={tag}>
                                                                 {tag}
                                                             </span>
@@ -130,8 +119,6 @@ export default function ViewModal({
                                                 </Detail>
                                             )
                                         }
-
-                                        {inventory.creator.userid && (<Detail label="Creator">@{inventory.creator.userid}</Detail>)}
                                     </dl>
                                 </>
                             )
@@ -149,13 +136,6 @@ export default function ViewModal({
                             >
                                 Cancel
                             </button>
-                            {/* <button
-                                type="button"
-                                className="btn btn-outline-secondary btn-blue-outline"
-                                onClick={onClose}
-                            >
-                                Edit
-                            </button> */}
 
                         </div>
                     </div>

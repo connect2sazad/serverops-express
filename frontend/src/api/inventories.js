@@ -1,15 +1,17 @@
 import { apiClient } from './client';
 
+const ROUTE = '/inventories';
+
 export async function inventory_list({
     page = 1,
     page_size = 10,
     search = "",
 }) {
-    const response = await apiClient.get('/inventories', {
+    const response = await apiClient.get(ROUTE, {
         params: {
             page,
             page_size,
-            search: search || null,
+            search: search || undefined,
         }
     });
 
@@ -19,7 +21,7 @@ export async function inventory_list({
 export async function inventory_read(id) {
 
     const response = await apiClient.get(
-        `/inventories/${id}/`
+        `${ROUTE}/${id}/`
     );
 
     return response.data.data;
@@ -30,7 +32,7 @@ export async function inventory_set_status(id, enabled) {
     const action = enabled ? 'enable' : 'disable';
 
     const response = await apiClient.put(
-        `/inventories/${id}/${action}`
+        `${ROUTE}/${id}/${action}`
     );
 
     return response.data;
@@ -45,7 +47,7 @@ export async function inventory_create(data) {
     };
 
     const response = await apiClient.post(
-        '/inventories/',
+        ROUTE,
         payload
     );
 
@@ -63,7 +65,7 @@ export async function inventory_update(id, data) {
     };
 
     const response = await apiClient.put(
-        `/inventories/${id}`,
+        `${ROUTE}/${id}/`,
         payload
     );
 
@@ -73,7 +75,7 @@ export async function inventory_update(id, data) {
 export async function inventory_delete(id) {
 
     const response = await apiClient.delete(
-        `/inventories/${id}/`
+        `${ROUTE}/${id}/`
     );
 
     return response.data.data;

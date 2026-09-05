@@ -19,6 +19,7 @@ import InventoriesPage from './pages/inventories/index.page.jsx';
 // error pages
 import ForbiddenPage from './pages/forbidden.page';
 import NotFoundPage from "./pages/not-found.page.jsx";
+import CredentialsPage from './pages/credentials/index.page.jsx';
 
 function App() {
 
@@ -42,6 +43,12 @@ function App() {
           <Route path='/inventories' element={
             <ProtectedRoute permissions={['inventories.list']}>
               <InventoriesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/credentials' element={
+            <ProtectedRoute permissions={['credentials.list']}>
+              <CredentialsPage />
             </ProtectedRoute>
           } />
 

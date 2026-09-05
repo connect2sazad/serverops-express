@@ -23,12 +23,12 @@ const primaryNavigation = [
     //     icon: 'bi-people',
     //     permission: 'users-roles.list'
     // },
-    // {
-    //     to: '/credentials',
-    //     label: 'Credentials',
-    //     icon: 'bi-key',
-    //     permission: 'credentials.list'
-    // },
+    {
+        to: '/credentials',
+        label: 'Credentials',
+        icon: 'bi-key',
+        permission: 'credentials.list'
+    },
     // {
     //     to: '/command-executions',
     //     label: 'Command Executions',
