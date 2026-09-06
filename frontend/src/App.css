@@ -1,0 +1,50 @@
+/*
+ * Scrollable application modals
+ */
+.modal.d-block {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.modal-dialog-scrollable {
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-dialog-scrollable .modal-content {
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.modal-dialog-scrollable .modal-body {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-dialog-scrollable .modal-header,
+.modal-dialog-scrollable .modal-footer {
+    flex-shrink: 0;
+}
+
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.modal-dialog-scrollable .modal-content > form > .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.modal-dialog-scrollable .modal-content > form > .modal-footer {
+    flex: 0 0 auto;
+}

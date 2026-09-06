@@ -26,6 +26,7 @@ import ForbiddenPage from './pages/forbidden.page';
 import NotFoundPage from "./pages/not-found.page.jsx";
 import CredentialsPage from './pages/credentials/index.page.jsx';
 import { PERMISSIONS } from './config/permissions.js';
+import UserRolesPage from './pages/user-roles/index.page.jsx';
 
 function App() {
 
@@ -85,6 +86,12 @@ function App() {
           <Route path='/command-executions' element={
             <ProtectedRoute permissions={[PERMISSIONS.COMMAND_EXECUTIONS_LIST]}>
               <CommandExecutionsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/user-roles' element={
+            <ProtectedRoute permissions={[PERMISSIONS.USER_ROLES_LIST]}>
+              <UserRolesPage />
             </ProtectedRoute>
           } />
 

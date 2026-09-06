@@ -1,103 +1,291 @@
 import express from 'express';
 
-import user_role_controller from '../controllers/user_role.controller.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
-import validate from '../middlewares/validate.middleware.js';
-import { authorizePermissions, authorizeRoles } from '../middlewares/authorize.middleware.js';
-import { UserRoleCreateSchema, UserRoleUpdateSchema } from '../schemas/user-role.schema.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import {
+    PERMISSIONS,
+} from '../config/permissions.js';
+
+import user_role_controller from
+    '../controllers/user_role.controller.js';
+
+import {
+    authenticate,
+} from '../middlewares/auth.middleware.js';
+
+import {
+    authorizePermissions,
+} from '../middlewares/authorize.middleware.js';
+
+import validate from
+    '../middlewares/validate.middleware.js';
+
+import {
+    UserRoleCreateSchema,
+    UserRoleUpdateSchema,
+} from '../schemas/user-role.schema.js';
+
 
 const router = express.Router();
+
 const PREFIX = '/user-roles';
 
-// string routes
-const USERROLES = PREFIX;
-const USERROLE_ID = PREFIX + '/:id';
-const USERROLE_ID_ENABLE = PREFIX + '/:id/enable';
-const USERROLE_ID_DISABLE = PREFIX + '/:id/disable';
-const USERROLE_ID_REMARKS = PREFIX + '/:id/remarks';
-const USERROLE_ID_TAGS = PREFIX + '/:id/tags';
-const USERROLE_ID_REMOVE_REMARKS = PREFIX + '/:id/remarks/remove';
-const USERROLE_ID_REMOVE_TAGS = PREFIX + '/:id/tags/remove';
+const USER_ROLES = PREFIX;
 
-// get all user roles
-router.get(USERROLES, authenticate, authorizePermissions(PERMISSIONS.USER_ROLES_LIST), async (req, res, next) => {
+const USER_ROLE_ID =
+    `${PREFIX}/:id`;
 
-  await user_role_controller.get(req, res, next);
+const USER_ROLE_ENABLE =
+    `${PREFIX}/:id/enable`;
 
-});
+const USER_ROLE_DISABLE =
+    `${PREFIX}/:id/disable`;
 
-// get a single user role details by id
-router.get(USERROLE_ID, authenticate, authorizePermissions(PERMISSIONS.USER_ROLES_READ), async (req, res, next) => {
+const USER_ROLE_REMARKS =
+    `${PREFIX}/:id/remarks`;
 
-  await user_role_controller.get(req, res, next);
+const USER_ROLE_TAGS =
+    `${PREFIX}/:id/tags`;
 
-});
+const USER_ROLE_REMOVE_REMARKS =
+    `${PREFIX}/:id/remarks/remove`;
 
-// create a user role
-router.post(USERROLES, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_CREATE), validate(UserRoleCreateSchema), async (req, res, next) => {
+const USER_ROLE_REMOVE_TAGS =
+    `${PREFIX}/:id/tags/remove`;
 
-  await user_role_controller.create(req, res, next);
 
-});
+// Get all user roles
+router.get(
+    USER_ROLES,
 
-// update user role route
-router.put(USERROLE_ID, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_UPDATE), validate(UserRoleUpdateSchema), async (req, res, next) => {
+    authenticate,
 
-  await user_role_controller.update(req, res, next);
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_LIST
+    ),
 
-});
+    async (req, res, next) => {
+        await user_role_controller.get(
+            req,
+            res,
+            next
+        );
+    }
+);
 
-// ==================================
-// delete user role
-router.delete(USERROLE_ID, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_DELETE), async (req, res, next) => {
 
-  await user_role_controller.delete(req, res, next);
+// Create a user role
+router.post(
+    USER_ROLES,
 
-});
+    authenticate,
 
-// enable user role
-router.put(USERROLE_ID_ENABLE, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_STATUS), async (req, res, next) => {
-  req.body = {
-    status: true
-  };
-  await user_role_controller.setStatus(req, res, next);
-});
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_CREATE
+    ),
 
-// disable user role
-router.put(USERROLE_ID_DISABLE, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_STATUS), async (req, res, next) => {
-  req.body = {
-    status: false
-  };
-  await user_role_controller.setStatus(req, res, next);
-});
+    validate(
+        UserRoleCreateSchema
+    ),
 
-// update user role remarks
-router.put(USERROLE_ID_REMARKS, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_UPDATE), async (req, res, next) => {
+    async (req, res, next) => {
+        await user_role_controller.create(
+            req,
+            res,
+            next
+        );
+    }
+);
 
-  await user_role_controller.setRemarks(req, res, next);
 
-});
+// Enable a user role
+router.put(
+    USER_ROLE_ENABLE,
 
-// update user role tags
-router.put(USERROLE_ID_TAGS, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_UPDATE), async (req, res, next) => {
+    authenticate,
 
-  await user_role_controller.setTags(req, res, next);
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_STATUS
+    ),
 
-});
+    async (req, res, next) => {
+        req.body = {
+            status: true,
+        };
 
-// remove user role remarks
-router.delete(USERROLE_ID_REMOVE_REMARKS, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_UPDATE), async (req, res, next) => {
+        await user_role_controller.setStatus(
+            req,
+            res,
+            next
+        );
+    }
+);
 
-  await user_role_controller.removeRemarks(req, res, next);
 
-});
+// Disable a user role
+router.put(
+    USER_ROLE_DISABLE,
 
-// remove user role tags
-router.delete(USERROLE_ID_REMOVE_TAGS, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USER_ROLES_UPDATE), async (req, res, next) => {
+    authenticate,
 
-  await user_role_controller.removeTags(req, res, next);
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_STATUS
+    ),
 
-});
+    async (req, res, next) => {
+        req.body = {
+            status: false,
+        };
+
+        await user_role_controller.setStatus(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Update user-role remarks
+router.put(
+    USER_ROLE_REMARKS,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_UPDATE
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.setRemarks(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Update user-role tags
+router.put(
+    USER_ROLE_TAGS,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_UPDATE
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.setTags(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Remove user-role remarks
+router.delete(
+    USER_ROLE_REMOVE_REMARKS,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_UPDATE
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.removeRemarks(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Remove user-role tags
+router.delete(
+    USER_ROLE_REMOVE_TAGS,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_UPDATE
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.removeTags(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Get one user role
+router.get(
+    USER_ROLE_ID,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_READ
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.get(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Update a user role
+router.put(
+    USER_ROLE_ID,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_UPDATE
+    ),
+
+    validate(
+        UserRoleUpdateSchema
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.update(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Delete a user role
+router.delete(
+    USER_ROLE_ID,
+
+    authenticate,
+
+    authorizePermissions(
+        PERMISSIONS.USER_ROLES_DELETE
+    ),
+
+    async (req, res, next) => {
+        await user_role_controller.delete(
+            req,
+            res,
+            next
+        );
+    }
+);
+
 
 export default router;
