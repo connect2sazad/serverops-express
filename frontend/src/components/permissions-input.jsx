@@ -10,7 +10,10 @@ import {
 
 
 function formatPermissionLabel(permission) {
-    if (permission === PERMISSIONS.ALL) {
+    if (
+        permission ===
+        PERMISSIONS.ALL
+    ) {
         return 'Full access';
     }
 
@@ -21,8 +24,10 @@ function formatPermissionLabel(permission) {
 
     return action
         .replaceAll('-', ' ')
-        .replace(/\b\w/g, character =>
-            character.toUpperCase()
+        .replace(
+            /\b\w/g,
+            character =>
+                character.toUpperCase()
         );
 }
 
@@ -30,8 +35,10 @@ function formatPermissionLabel(permission) {
 function formatGroupLabel(group) {
     return group
         .replaceAll('-', ' ')
-        .replace(/\b\w/g, character =>
-            character.toUpperCase()
+        .replace(
+            /\b\w/g,
+            character =>
+                character.toUpperCase()
         );
 }
 
@@ -41,16 +48,25 @@ export default function PermissionsInput({
     onChange,
     disabled = false,
     error = '',
+    allowFullAccess = true,
 }) {
-    const [search, setSearch] =
-        useState('');
+    const [
+        search,
+        setSearch,
+    ] = useState('');
 
     const selectedPermissions =
         Array.isArray(value)
-            ? value
+            ? value.filter(
+                permission =>
+                    allowFullAccess ||
+                    permission !==
+                        PERMISSIONS.ALL
+            )
             : [];
 
     const hasFullAccess =
+        allowFullAccess &&
         selectedPermissions.includes(
             PERMISSIONS.ALL
         );
@@ -78,26 +94,30 @@ export default function PermissionsInput({
             }
 
             return regularPermissions.filter(
-                permission =>
-                    permission
-                        .toLowerCase()
-                        .includes(
-                            normalizedSearch
-                        ) ||
-                    formatPermissionLabel(
+                permission => {
+                    const group =
+                        permission.split('.')[0];
+
+                    return (
                         permission
-                    )
-                        .toLowerCase()
-                        .includes(
-                            normalizedSearch
-                        ) ||
-                    formatGroupLabel(
-                        permission.split('.')[0]
-                    )
-                        .toLowerCase()
-                        .includes(
-                            normalizedSearch
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        formatPermissionLabel(
+                            permission
                         )
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        formatGroupLabel(group)
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            )
+                    );
+                }
             );
         }, [
             regularPermissions,
@@ -107,7 +127,10 @@ export default function PermissionsInput({
     const permissionGroups =
         useMemo(() => {
             return filteredPermissions.reduce(
-                (groups, permission) => {
+                (
+                    groups,
+                    permission
+                ) => {
                     const group =
                         permission.split('.')[0];
 
@@ -123,7 +146,9 @@ export default function PermissionsInput({
                 },
                 {}
             );
-        }, [filteredPermissions]);
+        }, [
+            filteredPermissions,
+        ]);
 
     const selectedRegularPermissions =
         selectedPermissions.filter(
@@ -151,27 +176,31 @@ export default function PermissionsInput({
                 permission ===
                 PERMISSIONS.ALL
             ) {
+                if (!allowFullAccess) {
+                    return;
+                }
+
                 onChange(
                     hasFullAccess
                         ? []
-                        : [PERMISSIONS.ALL]
+                        : [
+                            PERMISSIONS.ALL,
+                        ]
                 );
 
                 return;
             }
 
-            const permissionsWithoutFullAccess =
-                selectedRegularPermissions;
-
             if (
-                permissionsWithoutFullAccess.includes(
+                selectedRegularPermissions.includes(
                     permission
                 )
             ) {
                 onChange(
-                    permissionsWithoutFullAccess.filter(
-                        item =>
-                            item !== permission
+                    selectedRegularPermissions.filter(
+                        selected =>
+                            selected !==
+                            permission
                     )
                 );
 
@@ -179,7 +208,7 @@ export default function PermissionsInput({
             }
 
             onChange([
-                ...permissionsWithoutFullAccess,
+                ...selectedRegularPermissions,
                 permission,
             ]);
         };
@@ -194,27 +223,28 @@ export default function PermissionsInput({
         ]);
     };
 
+    const selectVisible = () => {
+        if (disabled) {
+            return;
+        }
+
+        const permissions =
+            new Set([
+                ...selectedRegularPermissions,
+                ...filteredPermissions,
+            ]);
+
+        onChange([
+            ...permissions,
+        ]);
+    };
+
     const deselectAll = () => {
         if (disabled) {
             return;
         }
 
         onChange([]);
-    };
-
-    const selectVisible = () => {
-        if (disabled) {
-            return;
-        }
-
-        const permissions = new Set([
-            ...selectedRegularPermissions,
-            ...filteredPermissions,
-        ]);
-
-        onChange([
-            ...permissions,
-        ]);
     };
 
     return (
@@ -247,10 +277,12 @@ export default function PermissionsInput({
                             className="btn btn-sm btn-outline-primary"
                             disabled={
                                 disabled ||
-                                filteredPermissions.length ===
-                                    0
+                                filteredPermissions
+                                    .length === 0
                             }
-                            onClick={selectVisible}
+                            onClick={
+                                selectVisible
+                            }
                         >
                             Select visible
                         </button>
@@ -260,21 +292,21 @@ export default function PermissionsInput({
                             className="btn btn-sm btn-outline-secondary"
                             disabled={
                                 disabled ||
-                                selectedPermissions.length ===
-                                    0
+                                selectedPermissions
+                                    .length === 0
                             }
-                            onClick={deselectAll}
+                            onClick={
+                                deselectAll
+                            }
                         >
                             Deselect all
                         </button>
                     </div>
 
                     <span className="small text-secondary align-self-center">
-                        {
-                            hasFullAccess
-                                ? 'Full access'
-                                : `${selectedPermissions.length} selected`
-                        }
+                        {hasFullAccess
+                            ? 'Full access'
+                            : `${selectedRegularPermissions.length} selected`}
                     </span>
                 </div>
 
@@ -294,48 +326,56 @@ export default function PermissionsInput({
                     />
                 </div>
 
-                <div className="card mb-3 border-danger-subtle">
-                    <div className="card-body py-2">
-                        <div className="form-check">
-                            <input
-                                id="permission-full-access"
-                                type="checkbox"
-                                className="form-check-input"
-                                checked={hasFullAccess}
-                                disabled={disabled}
-                                onChange={() =>
-                                    togglePermission(
-                                        PERMISSIONS.ALL
-                                    )
-                                }
-                            />
+                {allowFullAccess && (
+                    <div className="card mb-3 border-danger-subtle">
+                        <div className="card-body py-2">
+                            <div className="form-check">
+                                <input
+                                    id="permission-full-access"
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    checked={
+                                        hasFullAccess
+                                    }
+                                    disabled={
+                                        disabled
+                                    }
+                                    onChange={() =>
+                                        togglePermission(
+                                            PERMISSIONS.ALL
+                                        )
+                                    }
+                                />
 
-                            <label
-                                className="form-check-label"
-                                htmlFor="permission-full-access"
-                            >
-                                <strong>
-                                    Full access
-                                </strong>
+                                <label
+                                    className="form-check-label"
+                                    htmlFor="permission-full-access"
+                                >
+                                    <strong>
+                                        Full access
+                                    </strong>
 
-                                <span className="text-secondary ms-2">
-                                    (*)
-                                </span>
-                            </label>
-                        </div>
+                                    <span className="text-secondary ms-2">
+                                        (*)
+                                    </span>
+                                </label>
+                            </div>
 
-                        <div className="small text-secondary mt-1">
-                            Grants every current and future
-                            permission. Use this only for
-                            trusted administrator roles.
+                            <div className="small text-secondary mt-1">
+                                Grants every current and
+                                future permission. Use this
+                                only for trusted
+                                administrator roles.
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {hasFullAccess && (
                     <div className="alert alert-warning py-2">
-                        Full access is enabled. Individual
-                        permissions below are unnecessary.
+                        Full access is enabled.
+                        Individual permissions below are
+                        unnecessary.
                     </div>
                 )}
 
@@ -382,9 +422,11 @@ export default function PermissionsInput({
                                                             }
                                                             type="checkbox"
                                                             className="form-check-input"
-                                                            checked={selectedPermissions.includes(
-                                                                permission
-                                                            )}
+                                                            checked={
+                                                                selectedRegularPermissions.includes(
+                                                                    permission
+                                                                )
+                                                            }
                                                             disabled={
                                                                 disabled
                                                             }

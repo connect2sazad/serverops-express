@@ -1,44 +1,125 @@
 import express from 'express';
 
-import auth_controller from '../controllers/auth.controller.js';
-import validate from '../middlewares/validate.middleware.js';
-import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
-import { authorizeRoles, authorizePermissions } from '../middlewares/authorize.middleware.js';
-import { loginLimiter } from '../middlewares/rate-limit.middleware.js';
-import { PERMISSIONS } from '../config/permissions.js';
+import auth_controller from
+    '../controllers/auth.controller.js';
+
+import validate from
+    '../middlewares/validate.middleware.js';
+
+import {
+    authenticate,
+} from '../middlewares/auth.middleware.js';
+
+import {
+    authorizePermissions,
+} from '../middlewares/authorize.middleware.js';
+
+import {
+    loginLimiter,
+} from '../middlewares/rate-limit.middleware.js';
+
+import {
+    loginSchema,
+    registerSchema,
+} from '../schemas/auth.schema.js';
+
+import {
+    PERMISSIONS,
+} from '../config/permissions.js';
+
 
 const router = express.Router();
+
 const PREFIX = '/auth';
 
-// string routes
-const LOGIN = PREFIX + '/login';
-const REGISTER = PREFIX + '/register';
-const LOGOUT = PREFIX + '/logout';
+const AUTH_LOGIN =
+    `${PREFIX}/login`;
 
-// register a user
-router.post(REGISTER, authenticate, authorizeRoles('admin'), authorizePermissions(PERMISSIONS.USERS_CREATE), validate(registerSchema), async (req, res, next) => {
- 
-  await auth_controller.register(req, res, next);
+const AUTH_REGISTER =
+    `${PREFIX}/register`;
 
-});
+const AUTH_LOGOUT =
+    `${PREFIX}/logout`;
 
-// login
-router.post(PREFIX, loginLimiter, validate(loginSchema), async (req, res, next) => {
- 
-  await auth_controller.login(req, res, next);
 
-});
-router.post(LOGIN, loginLimiter, validate(loginSchema), async (req, res, next) => {
- 
-  await auth_controller.login(req, res, next);
+// Register a user
+router.post(
+    AUTH_REGISTER,
 
-});
+    authenticate,
 
-router.post(LOGOUT, authenticate, async (req, res, next) => {
+    authorizePermissions(
+        PERMISSIONS.USERS_CREATE
+    ),
 
-  await auth_controller.logout(req, res, next);
+    validate(
+        registerSchema
+    ),
 
-});
+    async (req, res, next) => {
+        await auth_controller.register(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Login using /auth
+router.post(
+    PREFIX,
+
+    loginLimiter,
+
+    validate(
+        loginSchema
+    ),
+
+    async (req, res, next) => {
+        await auth_controller.login(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Login using /auth/login
+router.post(
+    AUTH_LOGIN,
+
+    loginLimiter,
+
+    validate(
+        loginSchema
+    ),
+
+    async (req, res, next) => {
+        await auth_controller.login(
+            req,
+            res,
+            next
+        );
+    }
+);
+
+
+// Logout
+router.post(
+    AUTH_LOGOUT,
+
+    authenticate,
+
+    async (req, res, next) => {
+        await auth_controller.logout(
+            req,
+            res,
+            next
+        );
+    }
+);
+
 
 export default router;

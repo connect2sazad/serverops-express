@@ -27,6 +27,7 @@ import NotFoundPage from "./pages/not-found.page.jsx";
 import CredentialsPage from './pages/credentials/index.page.jsx';
 import { PERMISSIONS } from './config/permissions.js';
 import UserRolesPage from './pages/user-roles/index.page.jsx';
+import UsersPage from './pages/users/index.page.jsx';
 
 function App() {
 
@@ -92,6 +93,12 @@ function App() {
           <Route path='/user-roles' element={
             <ProtectedRoute permissions={[PERMISSIONS.USER_ROLES_LIST]}>
               <UserRolesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/users' element={
+            <ProtectedRoute permissions={[PERMISSIONS.USER_ROLES_LIST]}>
+              <UsersPage />
             </ProtectedRoute>
           } />
 
