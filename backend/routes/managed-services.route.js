@@ -12,8 +12,8 @@ const router = express.Router();
 
 const MANAGED_SERVICES = INVENTORY_ID + '/managed-services';
 const MANAGED_SERVICE_ID = MANAGED_SERVICES + '/:managed_service_id';
-// const MANAGED_SERVICE_ID_ENABLE = MANAGED_SERVICE_ID + '/enable';
-// const MANAGED_SERVICE_ID_DISABLE = MANAGED_SERVICE_ID + '/disable';
+const MANAGED_SERVICE_ID_ENABLE = MANAGED_SERVICE_ID + '/enable';
+const MANAGED_SERVICE_ID_DISABLE = MANAGED_SERVICE_ID + '/disable';
 // const MANAGED_SERVICE_ID_REMARKS = MANAGED_SERVICE_ID + '/remarks';
 // const MANAGED_SERVICE_ID_TAGS = MANAGED_SERVICE_ID + '/tags';
 // const MANAGED_SERVICE_ID_REMOVE_REMARKS = MANAGED_SERVICE_ID + '/remarks/remove';
@@ -88,23 +88,51 @@ router.delete(
     }
 );
 
+router.put(
+    MANAGED_SERVICE_ID_ENABLE,
+    authenticate,
+    authorizePermissions(
+        PERMISSIONS.MANAGED_SERVICES_STATUS
+    ),
+    validate(
+        ManagedServiceRecordParamsSchema,
+        "params"
+    ),
+    async (req, res, next) => {
+        req.body = {
+            status: true,
+        };
 
+        await managed_service_controller.setStatus(
+            req,
+            res,
+            next
+        );
+    }
+);
 
-// router.put(MANAGED_SERVICE_ID_ENABLE, authenticate, authorizePermissions(PERMISSIONS),
-//     validate(ManagedServiceRecordParamsSchema, 'params'), async (req, res, next) => {
-//         req.body = {
-//             status: true
-//         };
-//         await managed_service_controller.setStatus(req, res, next);
-//     });
+router.put(
+    MANAGED_SERVICE_ID_DISABLE,
+    authenticate,
+    authorizePermissions(
+        PERMISSIONS.MANAGED_SERVICES_STATUS
+    ),
+    validate(
+        ManagedServiceRecordParamsSchema,
+        "params"
+    ),
+    async (req, res, next) => {
+        req.body = {
+            status: false,
+        };
 
-// router.put(MANAGED_SERVICE_ID_DISABLE, authenticate, authorizePermissions(PERMISSIONS),
-//     validate(ManagedServiceRecordParamsSchema, 'params'), async (req, res, next) => {
-//         req.body = {
-//             status: false
-//         };
-//         await managed_service_controller.setStatus(req, res, next);
-//     });
+        await managed_service_controller.setStatus(
+            req,
+            res,
+            next
+        );
+    }
+);
 
 // router.put(MANAGED_SERVICE_ID_REMARKS, authenticate, authorizePermissions(PERMISSIONS),
 //     validate(ManagedServiceRecordParamsSchema, 'params'), async (req, res, next) => {

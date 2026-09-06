@@ -108,6 +108,7 @@ export class CommandController extends BaseController {
         try {
 
             const { id, managed_command_id } = req.params;
+            const { reason } = req.body;
 
             const inventory = await Inventory.findOne({
                 where: {
@@ -132,22 +133,19 @@ export class CommandController extends BaseController {
 
             const credential = await Credential.findOne({
                 where: {
-                    id,
+                    inventory_id: inventory.id,
+                    status: true,
                     deleted_at: null,
-                }
+                },
+                order: [
+                    ["id", "DESC"],
+                ],
             });
 
             if (!credential) {
                 throw new AppException(
-                    'Credential not found!',
+                    "No active credential found for this inventory.",
                     HTTP_STATUS.HTTP_404_NOT_FOUND
-                );
-            }
-
-            if (!credential.status) {
-                throw new AppException(
-                    'Credential has been disabled',
-                    HTTP_STATUS.HTTP_403_FORBIDDEN
                 );
             }
 
@@ -161,14 +159,14 @@ export class CommandController extends BaseController {
 
             if (!managedCommand) {
                 throw new AppException(
-                    'Credential not found!',
+                    "Managed Command not found for this inventory.",
                     HTTP_STATUS.HTTP_404_NOT_FOUND
                 );
             }
 
             if (!managedCommand.status) {
                 throw new AppException(
-                    'Credential has been disabled',
+                    "Managed Command has been disabled.",
                     HTTP_STATUS.HTTP_403_FORBIDDEN
                 );
             }
@@ -205,7 +203,7 @@ export class CommandController extends BaseController {
                 duration: connection.metadata.duration,
                 started_at: new Date(connection.metadata.startedAt),
                 finished_at: new Date(connection.metadata.startedAt + connection.metadata.duration),
-                remarks: message,
+                remarks: `${message} Reason(${req.user.userid}): ${reason}`,
                 tags: [
                     'managed-command',
                     managedCommand.name,

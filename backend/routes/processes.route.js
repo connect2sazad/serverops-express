@@ -5,7 +5,7 @@ import process_controller from '../controllers/process.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { authorizePermissions } from '../middlewares/authorize.middleware.js';
 import { PERMISSIONS } from '../config/permissions.js';
-import { ProcessParamsSchema } from '../schemas/process.schema.js';
+import { ProcessParamsSchema,ProcessActionSchema } from '../schemas/process.schema.js';
 
 const router = express.Router();
 const PREFIX = INVENTORY_ID + '/processes';
@@ -31,14 +31,14 @@ router.get(PROCESS_ID, authenticate, authorizePermissions(PERMISSIONS.PROCESSES_
 });
 
 // terminate a process
-router.post(PROCESS_ID_TERMINATE, authenticate, authorizePermissions(PERMISSIONS.PROCESSES_TERMINATE), validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
+router.post(PROCESS_ID_TERMINATE, authenticate, authorizePermissions(PERMISSIONS.PROCESSES_TERMINATE), validate(ProcessParamsSchema, 'params'), validate(ProcessActionSchema), async (req, res, next) => {
 
   await process_controller.terminateProcess(req, res, next, 'terminate');
 
 });
 
 // kill a process
-router.post(PROCESS_ID_KILL, authenticate, authorizePermissions(PERMISSIONS.PROCESSES_KILL), validate(ProcessParamsSchema, 'params'), async (req, res, next) => {
+router.post(PROCESS_ID_KILL, authenticate, authorizePermissions(PERMISSIONS.PROCESSES_KILL), validate(ProcessParamsSchema, 'params'), validate(ProcessActionSchema), async (req, res, next) => {
 
   await process_controller.terminateProcess(req, res, next, 'force_kill');
 

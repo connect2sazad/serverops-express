@@ -29,12 +29,12 @@ const primaryNavigation = [
         icon: 'bi-key',
         permission: 'credentials.list'
     },
-    // {
-    //     to: '/command-executions',
-    //     label: 'Command Executions',
-    //     icon: 'bi-terminal',
-    //     permission: 'command-executions.list'
-    // },
+    {
+        to: '/command-executions',
+        label: 'Command Executions',
+        icon: 'bi-terminal',
+        permission: 'command-executions.list'
+    },
     // {
     //     to: '/services',
     //     label: 'Services',

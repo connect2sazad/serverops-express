@@ -33,7 +33,7 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState("");
 
   const {
-    register, handleSubmit, formState: {
+    register, handleSubmit, reset, formState: {
       errors,
       isSubmitting,
     },
@@ -84,6 +84,11 @@ export default function LoginPage() {
         setServerError(   
           "Username or Password is incorrect!"
         );
+
+        reset({
+          password: ''
+        });
+        
       }
     }
   }

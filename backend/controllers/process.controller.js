@@ -167,7 +167,7 @@ class ProcessController {
                 command_status: result.commandStatus,
 
                 duration: result.metadata.duration,
-                remarks: `${message} Reason: ${reason}`,
+                remarks: `${message} Reason(${req.user.userid}): ${reason}`,
                 tags: [
                     'process',
                     action,
@@ -186,7 +186,7 @@ class ProcessController {
                 HTTP_STATUS.HTTP_200_OK.status_code
             ).json({
                 message,
-                success: true,
+                success: succeeded,
                 data: result
             });
 

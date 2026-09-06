@@ -6,7 +6,14 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 import { authorizePermissions } from '../middlewares/authorize.middleware.js';
 import { PERMISSIONS } from '../config/permissions.js';
 import validate from '../middlewares/validate.middleware.js';
-import { ManagedCommandCreateSchema, ManagedCommandUpdateSchema, ManagedCommandInventoryParamsSchema, ManagedCommandRecordParamsSchema, ManagedCommandExecuteParamsSchema } from '../schemas/managed-command.schema.js';
+import {
+    ManagedCommandCreateSchema,
+    ManagedCommandUpdateSchema,
+    ManagedCommandInventoryParamsSchema,
+    ManagedCommandRecordParamsSchema,
+    ManagedCommandExecuteParamsSchema,
+    ManagedCommandExecuteSchema,
+} from "../schemas/managed-command.schema.js";
 import command_controller from '../controllers/command-execution.controller.js';
 
 const router = express.Router();
@@ -113,6 +120,7 @@ router.delete(MANAGED_COMMAND_ID_REMOVE_TAGS, authenticate, authorizePermissions
 // execute managed command
 router.post(MANAGED_COMMAND_ID_EXECUTE, authenticate, authorizePermissions(PERMISSIONS.MANAGED_COMMANDS_EXECUTE),
     validate(ManagedCommandExecuteParamsSchema, 'params'),
+    validate(ManagedCommandExecuteSchema),
     async (req, res, next) => {
         await command_controller.executeManagedCommand(req, res, next);
     }

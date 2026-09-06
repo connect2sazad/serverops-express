@@ -281,6 +281,11 @@ textarea {
   background-color: blue;
 }
 
+.bg-yellow {
+  background-color: yellow;
+  color: black;
+}
+
 .page-size-select {
     width: 180px;
 }

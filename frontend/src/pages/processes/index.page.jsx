@@ -198,7 +198,7 @@ export default function ProcessesPage() {
   } = useQuery({
     queryKey: ['inventory', id],
     queryFn: () => inventory_read(id),
-    enabled: open && Boolean(id),
+    enabled: Boolean(id),
     retry: false,
   });
 

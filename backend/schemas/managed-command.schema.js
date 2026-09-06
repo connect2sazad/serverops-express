@@ -18,6 +18,17 @@ const CommandTextSchema = z.string()
         'Command contains an invalid null character.'
     );
 
+export const ManagedCommandExecuteSchema =
+    z.object({
+        reason: z.string()
+            .trim()
+            .min(
+                3,
+                "Execution reason must contain at least 3 characters."
+            )
+            .max(500),
+    });
+
 export const ManagedCommandSchema =
     BaseSchema.extend({
         inventory_id: z.number()
@@ -34,7 +45,7 @@ export const ManagedCommandSchema =
         timeout_seconds: z.number()
             .int()
             .positive(),
-        
+
         inventory: InventorySchema.optional(),
         creator: UserSchema.optional(),
     });

@@ -52,6 +52,71 @@ class ServiceController {
 
             const services = await service_service.getServices(inventory, credential);
 
+            const managedPolicies =
+                await ManagedService.findAll({
+                    where: {
+                        inventory_id: inventory.id,
+                        deleted_at: null,
+                    },
+                    attributes: [
+                        "service_name",
+                        "status",
+                        "can_start",
+                        "can_stop",
+                        "can_restart",
+                        "can_enable",
+                        "can_disable",
+                    ],
+                });
+
+            const policiesByService = new Map(
+                managedPolicies.map(policy => [
+                    policy.service_name.toLowerCase(),
+                    policy,
+                ])
+            );
+
+            services.services = services.services.map(
+                service => {
+                    const policy = policiesByService.get(
+                        service.name.toLowerCase()
+                    );
+
+                    const policyActive =
+                        policy?.status === true;
+
+                    return {
+                        ...service,
+
+                        managed: Boolean(policy),
+
+                        policy_active: policyActive,
+
+                        allowed_actions: {
+                            start:
+                                policyActive &&
+                                policy.can_start === true,
+
+                            stop:
+                                policyActive &&
+                                policy.can_stop === true,
+
+                            restart:
+                                policyActive &&
+                                policy.can_restart === true,
+
+                            enable:
+                                policyActive &&
+                                policy.can_enable === true,
+
+                            disable:
+                                policyActive &&
+                                policy.can_disable === true,
+                        },
+                    };
+                }
+            );
+
             // get the connection details and save in inventory
             inventory.connection_status = 'disconnected';
             inventory.last_connected_at = new Date(services.metadata.startedAt);
@@ -139,7 +204,7 @@ class ServiceController {
 
             const permissionField = permissionByAction[action];
 
-            if(!permissionField){
+            if (!permissionField) {
                 throw new AppException(
                     'Unsupported service action.',
                     HTTP_STATUS.HTTP_400_BAD_REQUEST
@@ -155,10 +220,10 @@ class ServiceController {
                 }
             });
 
-            if(
+            if (
                 !managedService ||
                 managedService[permissionField] !== true
-            ){
+            ) {
                 throw new AppException(
                     `The ${action} action is not allowed for this service.`,
                     HTTP_STATUS.HTTP_403_FORBIDDEN

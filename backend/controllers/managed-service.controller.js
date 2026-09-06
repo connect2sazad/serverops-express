@@ -288,6 +288,44 @@ class ManagedServiceController extends BaseController {
             next(error);
         }
     }
+
+    async setStatus(req, res, next) {
+        try {
+            const managedService =
+                await this.getManagedService(req);
+
+            const status = req.body.status;
+
+            if (typeof status !== "boolean") {
+                throw new AppException(
+                    "Status must be a boolean.",
+                    HTTP_STATUS.HTTP_422_UNPROCESSABLE_ENTITY
+                );
+            }
+
+            await managedService.update({
+                status,
+            });
+
+            await managedService.reload({
+                include: this.includes,
+            });
+
+            return res
+                .status(
+                    HTTP_STATUS.HTTP_200_OK.status_code
+                )
+                .json({
+                    success: true,
+                    message: status
+                        ? "Managed service enabled successfully."
+                        : "Managed service disabled successfully.",
+                    data: this.serialize(managedService),
+                });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 const managed_service_controller = new ManagedServiceController();

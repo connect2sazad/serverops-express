@@ -18,6 +18,8 @@ import DashboardPage from './pages/dashboard.page';
 import InventoriesPage from './pages/inventories/index.page.jsx';
 import ServicesPage from './pages/services/index.page.jsx';
 import ProcessesPage from './pages/processes/index.page.jsx';
+import CommandExecutionsPage from './pages/command-executions/index.page.jsx';
+import ManagedServicesPage from './pages/managed-services/index.page';
 // error pages
 import ForbiddenPage from './pages/forbidden.page';
 import NotFoundPage from "./pages/not-found.page.jsx";
@@ -61,9 +63,21 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/inventories/:id/managed-services" element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGED_SERVICES_LIST]}>
+              <ManagedServicesPage />
+            </ProtectedRoute>
+          } />
+
           <Route path='/credentials' element={
             <ProtectedRoute permissions={[PERMISSIONS.CREDENTIALS_LIST]}>
               <CredentialsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/command-executions' element={
+            <ProtectedRoute permissions={[PERMISSIONS.COMMAND_EXECUTIONS_LIST]}>
+              <CommandExecutionsPage />
             </ProtectedRoute>
           } />
 
