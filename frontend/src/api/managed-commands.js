@@ -3,24 +3,28 @@ import { apiClient } from "./client";
 const inventoryRoute = inventoryId =>
   `/inventories/${inventoryId}/managed-commands`;
 
-function normalizePayload(data) {
+function normalizeCreatePayload(data) {
   return {
-    service_name: data.service_name?.trim(),
+    name: data.name.trim(),
 
-    can_start: Boolean(data.can_start),
-    can_stop: Boolean(data.can_stop),
-    can_restart: Boolean(data.can_restart),
-    can_enable: Boolean(data.can_enable),
-    can_disable: Boolean(data.can_disable),
+    description:
+      data.description?.trim() || null,
 
-    remarks: data.remarks?.trim() || null,
+    command: data.command.trim(),
+
+    timeout_seconds:
+      Number(data.timeout_seconds),
+
+    remarks:
+      data.remarks?.trim() || null,
+
     tags: Array.isArray(data.tags)
       ? data.tags
       : [],
   };
 }
 
-export async function managed_service_list({
+export async function managed_command_list({
   inventoryId,
   page = 1,
   page_size = 10,
@@ -40,64 +44,52 @@ export async function managed_service_list({
   return response.data;
 }
 
-export async function managed_service_read(
+export async function managed_command_read(
   inventoryId,
-  managedServiceId
+  managedCommandId
 ) {
   const response = await apiClient.get(
-    `${inventoryRoute(inventoryId)}/${managedServiceId}`
+    `${inventoryRoute(inventoryId)}/${managedCommandId}`
   );
 
   return response.data.data;
 }
 
-export async function managed_service_create(
+export async function managed_command_create(
   inventoryId,
   data
 ) {
   const response = await apiClient.post(
     inventoryRoute(inventoryId),
-    normalizePayload(data)
+    normalizeCreatePayload(data)
   );
 
   return response.data;
 }
 
-export async function managed_service_update(
+export async function managed_command_update(
   inventoryId,
-  managedServiceId,
+  managedCommandId,
   data
 ) {
   const payload = {};
 
-  if (data.service_name !== undefined) {
-    payload.service_name =
-      data.service_name.trim();
+  if (data.name !== undefined) {
+    payload.name = data.name.trim();
   }
 
-  if (data.can_start !== undefined) {
-    payload.can_start =
-      Boolean(data.can_start);
+  if (data.description !== undefined) {
+    payload.description =
+      data.description?.trim() || null;
   }
 
-  if (data.can_stop !== undefined) {
-    payload.can_stop =
-      Boolean(data.can_stop);
+  if (data.command !== undefined) {
+    payload.command = data.command.trim();
   }
 
-  if (data.can_restart !== undefined) {
-    payload.can_restart =
-      Boolean(data.can_restart);
-  }
-
-  if (data.can_enable !== undefined) {
-    payload.can_enable =
-      Boolean(data.can_enable);
-  }
-
-  if (data.can_disable !== undefined) {
-    payload.can_disable =
-      Boolean(data.can_disable);
+  if (data.timeout_seconds !== undefined) {
+    payload.timeout_seconds =
+      Number(data.timeout_seconds);
   }
 
   if (data.remarks !== undefined) {
@@ -112,27 +104,27 @@ export async function managed_service_update(
   }
 
   const response = await apiClient.put(
-    `${inventoryRoute(inventoryId)}/${managedServiceId}`,
+    `${inventoryRoute(inventoryId)}/${managedCommandId}`,
     payload
   );
 
   return response.data;
 }
 
-export async function managed_service_delete(
+export async function managed_command_delete(
   inventoryId,
-  managedServiceId
+  managedCommandId
 ) {
   const response = await apiClient.delete(
-    `${inventoryRoute(inventoryId)}/${managedServiceId}`
+    `${inventoryRoute(inventoryId)}/${managedCommandId}`
   );
 
   return response.data;
 }
 
-export async function managed_service_set_status(
+export async function managed_command_set_status(
   inventoryId,
-  managedServiceId,
+  managedCommandId,
   enabled
 ) {
   const action = enabled
@@ -140,7 +132,22 @@ export async function managed_service_set_status(
     : "disable";
 
   const response = await apiClient.put(
-    `${inventoryRoute(inventoryId)}/${managedServiceId}/${action}`
+    `${inventoryRoute(inventoryId)}/${managedCommandId}/${action}`
+  );
+
+  return response.data;
+}
+
+export async function managed_command_execute(
+  inventoryId,
+  managedCommandId,
+  reason
+) {
+  const response = await apiClient.post(
+    `${inventoryRoute(inventoryId)}/${managedCommandId}/execute`,
+    {
+      reason: reason.trim(),
+    }
   );
 
   return response.data;

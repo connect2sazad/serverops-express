@@ -218,13 +218,22 @@ export class CommandController extends BaseController {
                 include: this.includes,
             });
 
-            return res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
+            return res.status(
+                HTTP_STATUS.HTTP_200_OK.status_code
+            ).json({
+                // ServerOps successfully completed and audited the attempt.
                 success: true,
+
+                // The remote command itself succeeded or failed.
+                execution_success:
+                    connection.commandStatus === "success",
+
                 message,
+
                 data: {
                     connection,
                     execution: this.serialize(execution),
-                }
+                },
             });
 
         } catch (e) {
