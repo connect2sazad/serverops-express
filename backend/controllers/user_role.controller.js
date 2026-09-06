@@ -162,12 +162,28 @@ export class UserRoleController
                 status,
             } = req.body;
 
+            const requestedStatus =
+                Boolean(status);
+
             const role =
                 await this.getRecord(req);
 
             if (
+                requestedStatus === false &&
+                Number(role.id) ===
+                Number(
+                    req.user.user_role_id
+                )
+            ) {
+                throw new AppException(
+                    'You cannot disable the role assigned to your own account.',
+                    HTTP_STATUS.HTTP_403_FORBIDDEN
+                );
+            }
+
+            if (
                 this.isProtectedRole(role) &&
-                status === false
+                requestedStatus === false
             ) {
                 throw new AppException(
                     'The administrator role cannot be disabled.',
@@ -178,7 +194,7 @@ export class UserRoleController
             const updatedRole =
                 await role.update({
                     status:
-                        Boolean(status),
+                        requestedStatus,
                 });
 
             return res.status(
@@ -188,10 +204,9 @@ export class UserRoleController
                 success: true,
 
                 message:
-                    `User role ${
-                        updatedRole.status
-                            ? 'enabled'
-                            : 'disabled'
+                    `User role ${updatedRole.status
+                        ? 'enabled'
+                        : 'disabled'
                     } successfully.`,
 
                 data:

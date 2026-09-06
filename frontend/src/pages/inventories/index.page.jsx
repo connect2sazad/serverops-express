@@ -281,7 +281,7 @@ const createColumns = ({
 
           return (
             <>
-              {hasPermission(PERMISSIONS.COMMAND_EXECUTIONS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/command-executions/'}><i className="bi bi-eye"></i>&emsp;Command Executions</Link>)}
+              {/* {hasPermission(PERMISSIONS.COMMAND_EXECUTIONS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/command-executions/'}><i className="bi bi-eye"></i>&emsp;Command Executions</Link>)} */}
               {hasPermission(PERMISSIONS.SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/services'}><i className="bi bi-gear"></i>&emsp;Services</Link>)}
               {hasPermission(PERMISSIONS.PROCESSES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/processes'}><i className="bi bi-cpu"></i>&emsp;Processes</Link>)}
               {hasPermission(PERMISSIONS.MANAGED_SERVICES_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-silver" to={link_prefix + '/managed-services'}><i className="bi bi-gear-wide-connected"></i>&emsp;Managed Services</Link>)}
@@ -304,7 +304,7 @@ const createColumns = ({
             <>
 
 
-              {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
+              {/* {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)} */}
               {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(inventory)}><i className="bi bi-eye"></i>&emsp;View</button>)}
               {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(inventory)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
               {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;{deletePending ? 'Removing...' : 'Remove'}</button>)}

@@ -229,10 +229,9 @@ function createColumns({
                     return (
                         <span
                             className={
-                                `badge ${
-                                    user.status
-                                        ? 'text-bg-success'
-                                        : 'text-bg-danger'
+                                `badge ${user.status
+                                    ? 'text-bg-success'
+                                    : 'text-bg-danger'
                                 }`
                             }
                         >
@@ -258,7 +257,7 @@ function createColumns({
                                 disabled={
                                     isCurrentUser ||
                                     statusPendingId !==
-                                        null
+                                    null
                                 }
                                 aria-label={
                                     user.status
@@ -275,10 +274,10 @@ function createColumns({
 
                             {statusPendingId ===
                                 user.id && (
-                                <span className="small ms-2">
-                                    Updating…
-                                </span>
-                            )}
+                                    <span className="small ms-2">
+                                        Updating…
+                                    </span>
+                                )}
                         </div>
 
                         {isCurrentUser && (
@@ -306,81 +305,81 @@ function createColumns({
                         {hasPermission(
                             PERMISSIONS.USERS_READ
                         ) && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-secondary btn-blue"
-                                onClick={() =>
-                                    onView(user)
-                                }
-                            >
-                                <i className="bi bi-eye me-1" />
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-secondary btn-blue"
+                                    onClick={() =>
+                                        onView(user)
+                                    }
+                                >
+                                    <i className="bi bi-eye me-1" />
 
-                                View
-                            </button>
-                        )}
+                                    View
+                                </button>
+                            )}
 
                         {hasPermission(
                             PERMISSIONS.USERS_UPDATE
                         ) && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-secondary btn-blue"
-                                onClick={() =>
-                                    onEdit(user)
-                                }
-                            >
-                                <i className="bi bi-pencil me-1" />
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-secondary btn-blue"
+                                    onClick={() =>
+                                        onEdit(user)
+                                    }
+                                >
+                                    <i className="bi bi-pencil me-1" />
 
-                                Edit
-                            </button>
-                        )}
+                                    Edit
+                                </button>
+                            )}
 
                         {hasPermission(
                             PERMISSIONS.USERS_PERMISSIONS_UPDATE
                         ) && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() =>
-                                    onPermissions(
-                                        user
-                                    )
-                                }
-                            >
-                                <i className="bi bi-shield-check me-1" />
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() =>
+                                        onPermissions(
+                                            user
+                                        )
+                                    }
+                                >
+                                    <i className="bi bi-shield-check me-1" />
 
-                                Permissions
-                            </button>
-                        )}
+                                    Permissions
+                                </button>
+                            )}
 
                         {hasPermission(
                             PERMISSIONS.USERS_DELETE
                         ) && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-secondary btn-red"
-                                disabled={
-                                    isCurrentUser ||
-                                    deletingId !==
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-secondary btn-red"
+                                    disabled={
+                                        isCurrentUser ||
+                                        deletingId !==
                                         null
-                                }
-                                title={
-                                    isCurrentUser
-                                        ? 'You cannot delete your own account.'
-                                        : undefined
-                                }
-                                onClick={() =>
-                                    onDelete(user)
-                                }
-                            >
-                                <i className="bi bi-trash me-1" />
+                                    }
+                                    title={
+                                        isCurrentUser
+                                            ? 'You cannot delete your own account.'
+                                            : undefined
+                                    }
+                                    onClick={() =>
+                                        onDelete(user)
+                                    }
+                                >
+                                    <i className="bi bi-trash me-1" />
 
-                                {deletingId ===
-                                user.id
-                                    ? 'Removing…'
-                                    : 'Remove'}
-                            </button>
-                        )}
+                                    {deletingId ===
+                                        user.id
+                                        ? 'Removing…'
+                                        : 'Remove'}
+                                </button>
+                            )}
                     </div>
                 );
             },
@@ -393,6 +392,7 @@ export default function UsersPage() {
     const {
         user: authenticatedUser,
         hasPermission,
+        refreshUser,
     } = useAuth();
 
     const {
@@ -593,6 +593,15 @@ export default function UsersPage() {
                         });
                 }
 
+                if (
+                    Number(updatedUserId) ===
+                    Number(
+                        authenticatedUser?.id
+                    )
+                ) {
+                    await refreshUser();
+                }
+
                 toast.success(
                     response?.message ??
                     'User updated successfully.'
@@ -637,23 +646,19 @@ export default function UsersPage() {
                         });
                 }
 
-                toast.success(
-                    response?.message ??
-                    'Individual permissions updated successfully.'
-                );
-
                 if (
-                    Number(
-                        updatedUserId
-                    ) ===
+                    Number(updatedUserId) ===
                     Number(
                         authenticatedUser?.id
                     )
                 ) {
-                    toast.info(
-                        'Sign in again to refresh your effective permissions.'
-                    );
+                    await refreshUser();
                 }
+
+                toast.success(
+                    response?.message ??
+                    'Individual permissions updated successfully.'
+                );
             },
 
             onError: error => {
@@ -830,7 +835,7 @@ export default function UsersPage() {
                     validate:
                         value =>
                             value ===
-                                user.userid ||
+                            user.userid ||
                             'The User ID does not match.',
                 },
             });
