@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import AsyncSelect from 'react-select/async';
 import { useQuery } from "@tanstack/react-query";
 
 import { getApiError } from '../../api/api-error';
-import { credential_read } from "../../api/credentials";
-import TagsInput from "../../components/tags-input";
+import TagsInput from '../../components/tags-input';
+import { inventory_list } from "../../api/inventories";
+import { credential_read } from '../../api/credentials'
 
 export default function EditModal({
     open,
@@ -26,28 +28,76 @@ export default function EditModal({
 
     const form = useForm({
         defaultValues: {
-            name: '',
-            hostname: '',
-            ssh_port: 22,
-            environment: 'development',
-            operating_system: '',
-            description: '',
-            remarks: '',
+            inventory: null,
+            username: '',
+            type: 'password',
+            secret: '',
+            private_key: null,
+            passphrase: '',
             tags: [],
+            remarks: '',
         }
     });
-    const { register, control, handleSubmit, reset, formState: { errors } } = form;
+    const { register, control, handleSubmit, reset, watch, formState: { errors } } = form;
+
+    const credentialType = watch('type');
+
+    const loadInventoryOptions = async inputValue => {
+        const response = await inventory_list({
+            page: 1,
+            page_size: 20,
+            search: inputValue.trim(),
+        });
+
+        return response.data.map(inventory => {
+            const memoryGiB =
+                inventory.memory_total_kib != null
+                    ? (
+                        inventory.memory_total_kib /
+                        1024 /
+                        1024
+                    ).toFixed(2)
+                    : null;
+
+            const tags = Array.isArray(inventory.tags)
+                ? inventory.tags
+                : [];
+
+            const details = [
+                inventory.operating_system,
+                inventory.kernel
+                    ? `Kernel ${inventory.kernel}`
+                    : null,
+                inventory.architecture,
+                memoryGiB
+                    ? `${memoryGiB} GiB RAM`
+                    : null,
+                inventory.environment,
+            ].filter(Boolean);
+
+            return {
+                value: inventory.id,
+                label: `${inventory.name} — ${inventory.hostname}:${inventory.ssh_port}`,
+                description:
+                    details.length > 0
+                        ? details.join(" · ")
+                        : "System information not discovered",
+                tags,
+                inventory,
+            };
+        });
+    };
 
     useEffect(() => {
         if (!open || !credential) return;
 
         reset({
-            name: credential.name ?? '',
-            hostname: credential.hostname ?? '',
-            ssh_port: credential.ssh_port ?? 22,
-            environment: credential.environment ?? 'development',
-            operating_system: credential.operating_system ?? '',
-            description: credential.description ?? '',
+            inventory: credential.inventory,
+            username: credential.username,
+            type: credential.type,
+            secret: '',
+            private_key: null,
+            passphrase: '',
             remarks: credential.remarks ?? '',
             tags: Array.isArray(credential.tags) ? credential.tags : []
         });
@@ -72,11 +122,21 @@ export default function EditModal({
         }
     }, [open, submitting, onClose]);
 
+    const submitForm = values => {
+        onSubmit({
+            ...values,
+            inventory_id: values.inventory.value,
+            private_key: values.private_key?.[0] ?? null,
+            secret: values.type === 'password' ? values.secret : undefined,
+            passphrase: values.type === 'private-key' ? values.passphrase : undefined,
+        });
+    }
+
     if (!open) return null;
 
     return (
         <>
-            <div className="modal d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="create-credential-title" onMouseDown={event => {
+            <div className="modal d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="edit-credential-title" onMouseDown={event => {
                 if (event.target === event.currentTarget && !submitting) {
                     onClose();
                 }
@@ -85,11 +145,11 @@ export default function EditModal({
                 <div className="modal-dialog modal-lg modal-dialog-centered">
                     <div className="modal-content shadow">
                         <div className="modal-header">
-                            <h2 id="create-credential-title" className="modal-title fs-5">Edit Credential</h2>
+                            <h2 id="edit-credential-title" className="modal-title fs-5">Edit Credential</h2>
                             <button type="button" className="btn-close" aria-label="Close" disabled={submitting} onClick={onClose} />
                         </div>
 
-                        <form noValidate onSubmit={handleSubmit(onSubmit)}>
+                        <form noValidate onSubmit={handleSubmit(submitForm)}>
                             <div className="modal-body">
                                 {error && (
                                     <div className="alert alert-danger">
@@ -99,42 +159,98 @@ export default function EditModal({
                                     </div>
                                 )}
                                 {/* ==============================================FORM FIELDS=============================================== */}
+
                                 <div className="mb-3">
-                                    <label className="form-label" htmlFor="name" >
-                                        Credential Name
+                                    <label
+                                        className="form-label"
+                                        htmlFor="credential-inventory"
+                                    >
+                                        Attach Credential to Inventory
                                     </label>
 
-                                    <input id="name" autoComplete="off" autoFocus placeholder="Credential Name"
-                                        className={`form-control ${errors.name
-                                            ? "is-invalid" : ""}`}
-                                        {...register("name", {
-                                            required: "Credential Name is required!",
-                                            minLength: {
-                                                value: 3,
-                                                message: 'Credential name must contain at least 3 characters.',
-                                            },
-                                            maxLength: {
-                                                value: 100,
-                                                message: 'Credential name cannot exceed 100 characters.',
-                                            },
-                                        })}
+                                    <Controller
+                                        name="inventory"
+                                        control={control}
+                                        rules={{
+                                            required: "Inventory selection is required.",
+                                        }}
+                                        render={({ field }) => (
+                                            <AsyncSelect
+                                                inputId="credential-inventory"
+                                                cacheOptions
+                                                defaultOptions
+                                                isClearable
+                                                isDisabled={submitting}
+                                                value={field.value}
+                                                loadOptions={loadInventoryOptions}
+                                                onChange={field.onChange}
+                                                onBlur={field.onBlur}
+                                                placeholder="Search by name, hostname, OS..."
+                                                getOptionLabel={option => option.label}
+                                                getOptionValue={option => String(option.value)}
+                                                formatOptionLabel={option => (
+                                                    <div>
+                                                        <div className="fw-semibold">
+                                                            {option.label}
+                                                        </div>
+
+                                                        <div className="small text-secondary">
+                                                            {option.description}
+                                                        </div>
+
+                                                        {option.tags.length > 0 && (
+                                                            <div className="d-flex flex-wrap gap-1 mt-1">
+                                                                {option.tags.map(tag => (
+                                                                    <span
+                                                                        key={tag}
+                                                                        className="badge rounded-pill bg-secondary"
+                                                                    >
+                                                                        {tag}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                noOptionsMessage={({ inputValue }) =>
+                                                    inputValue
+                                                        ? "No matching inventories found."
+                                                        : "No inventories available."
+                                                }
+                                                loadingMessage={() =>
+                                                    "Searching inventories..."
+                                                }
+                                                className={
+                                                    errors.inventory
+                                                        ? "is-invalid"
+                                                        : ""
+                                                }
+                                                classNamePrefix="inventory-select"
+                                            />
+                                        )}
                                     />
 
-                                    <div className="invalid-feedback">
-                                        {errors.name?.message}
+                                    {errors.inventory && (
+                                        <div className="invalid-feedback d-block">
+                                            {errors.inventory.message}
+                                        </div>
+                                    )}
+
+                                    <div className="form-text">
+                                        Start typing to search all inventories.
                                     </div>
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label" htmlFor="hostname" >
-                                        Hostname
+                                    <label className="form-label" htmlFor="username" >
+                                        SSH Username
                                     </label>
 
-                                    <input id="hostname" autoComplete="off" placeholder="Hostname or Public IP"
-                                        className={`form-control ${errors.hostname
+                                    <input id="username" autoComplete="off" placeholder="SSH Username"
+                                        className={`form-control ${errors.username
                                             ? "is-invalid" : ""}`}
-                                        {...register("hostname", {
-                                            required: 'Hostname is required.',
+                                        {...register("username", {
+                                            required: 'Username is required.',
                                             maxLength: {
                                                 value: 100,
                                                 message: 'Hostname cannot exceed 100 characters.',
@@ -143,89 +259,139 @@ export default function EditModal({
                                     />
 
                                     <div className="invalid-feedback">
-                                        {errors.hostname?.message}
+                                        {errors.username?.message}
                                     </div>
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label" htmlFor="ssh-port" >
-                                        Port
+                                    <label className="form-label" htmlFor="credential-type" >
+                                        Credential Type
                                     </label>
 
-                                    <input type="number" id="ssh-port" autoComplete="off" placeholder="SSH Port"
-                                        className={`form-control ${errors.ssh_port
-                                            ? "is-invalid" : ""}`}
-                                        {...register("ssh_port", {
-                                            valueAsNumber: true,
-                                            required: 'SSH port is required.',
-                                            min: {
-                                                value: 1,
-                                                message: 'SSH port must be at least 1.',
-                                            },
-                                            max: {
-                                                value: 65535,
-                                                message: 'SSH port cannot exceed 65535.',
-                                            },
-                                        })}
-                                    />
-
-                                    <div className="invalid-feedback">
-                                        {errors.ssh_port?.message}
-                                    </div>
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="form-label" htmlFor="env" >
-                                        Environment
-                                    </label>
-
-                                    <select name="" id="env" className={`form-control ${errors.environment
-                                        ? "is-invalid" : ""}`} {...register('environment', { required: "Environment is required." })}>
-                                        <option value="production">Production</option>
-                                        <option value="development">Development</option>
-                                        <option value="test">Test</option>
+                                    <select id="credential-type" className="form-select"
+                                        {...register("type")}
+                                    >
+                                        <option value="password">Password</option>
+                                        <option value="private-key">Private Key</option>
                                     </select>
-
-                                    <div className="invalid-feedback">
-                                        {errors.environment?.message}
-                                    </div>
                                 </div>
 
-                                <div className="mb-3">
-                                    <label className="form-label" htmlFor="operating_system" >
-                                        Operating System
-                                    </label>
+                                {credentialType === "password" && (
+                                    <div className="mb-3">
+                                        <label
+                                            className="form-label"
+                                            htmlFor="credential-password"
+                                        >
+                                            Password
 
-                                    <input id="operating_system" autoComplete="off" placeholder="Operating System"
-                                        className={`form-control ${errors.operating_system
-                                            ? "is-invalid" : ""}`}
-                                        {...register("operating_system", {
-                                            maxLength: {
-                                                value: 100,
-                                                message: 'Operating System exceed 100 characters.',
-                                            },
-                                        })}
-                                    />
+                                            {credential?.type === "password" && (
+                                                <span className="text-secondary ms-1">
+                                                    (leave blank to keep existing password)
+                                                </span>
+                                            )}
+                                        </label>
 
-                                    <div className="invalid-feedback">
-                                        {errors.operating_system?.message}
+                                        <input
+                                            id="credential-password"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            className={`form-control ${errors.secret
+                                                ? "is-invalid"
+                                                : ""
+                                                }`}
+                                            {...register("secret", {
+                                                validate: value => {
+                                                    const switchingToPassword =
+                                                        credential?.type !== "password" &&
+                                                        credentialType === "password";
+
+                                                    if (
+                                                        switchingToPassword &&
+                                                        !value?.trim()
+                                                    ) {
+                                                        return "A password is required when switching credential type.";
+                                                    }
+
+                                                    return true;
+                                                },
+                                            })}
+                                        />
+
+                                        <div className="invalid-feedback">
+                                            {errors.secret?.message}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="mb-3">
-                                    <label className="form-label" htmlFor="description" >
-                                        Description
-                                    </label>
+                                {credentialType === "private-key" && (
+                                    <>
+                                        <div className="mb-3">
+                                            <label
+                                                className="form-label"
+                                                htmlFor="credential-private-key"
+                                            >
+                                                Private Key
+                                                {credential?.type === "private-key" && (
+                                                    <span className="text-secondary ms-1">
+                                                        (leave blank to keep existing key)
+                                                    </span>
+                                                )}
+                                            </label>
 
-                                    <textarea id="description" className={`form-control ${errors.description
-                                        ? "is-invalid" : ""}`} placeholder="Description"
-                                        {...register('description')}></textarea>
+                                            <input
+                                                id="credential-private-key"
+                                                type="file"
+                                                className={`form-control ${errors.private_key
+                                                    ? "is-invalid"
+                                                    : ""
+                                                    }`}
+                                                {...register("private_key", {
+                                                    validate: files => {
+                                                        const switchingToPrivateKey =
+                                                            credential?.type !== "private-key" &&
+                                                            credentialType === "private-key";
 
-                                    <div className="invalid-feedback">
-                                        {errors.description?.message}
-                                    </div>
-                                </div>
+                                                        if (
+                                                            switchingToPrivateKey &&
+                                                            !files?.length
+                                                        ) {
+                                                            return "A private key file is required when switching credential type.";
+                                                        }
 
+                                                        return true;
+                                                    },
+                                                })}
+                                            />
+
+                                            <div className="invalid-feedback">
+                                                {
+                                                    errors.private_key
+                                                        ?.message
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label
+                                                className="form-label"
+                                                htmlFor="credential-passphrase"
+                                            >
+                                                Passphrase
+                                                <span className="text-secondary ms-1">
+                                                    (optional)
+                                                </span>
+                                            </label>
+
+                                            <input
+                                                id="credential-passphrase"
+                                                type="password"
+                                                autoComplete="new-password"
+                                                className="form-control"
+                                                {...register("passphrase")}
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className="mb-3">
                                     <label className="form-label" htmlFor="remarks" >
@@ -242,17 +408,15 @@ export default function EditModal({
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">
+                                    <label className="form-label" htmlFor="tags" >
                                         Tags
                                     </label>
 
-                                    <Controller
-                                        name="tags"
-                                        control={control}
+                                    <Controller name="tags" control={control} defaultValue={[]}
                                         rules={{
                                             validate: tags =>
                                                 tags.length <= 20 ||
-                                                "A maximum of 20 tags is allowed.",
+                                                'A maximum of 20 tags is allowed.',
                                         }}
                                         render={({ field }) => (
                                             <TagsInput
@@ -263,6 +427,7 @@ export default function EditModal({
                                             />
                                         )}
                                     />
+
                                 </div>
 
                                 {/* ==============================================FORM FIELDS=============================================== */}

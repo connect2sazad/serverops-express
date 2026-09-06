@@ -49,36 +49,67 @@ export default function ConfirmationProvider({ children }) {
         const inputOptions = options?.input;
 
         if (inputOptions) {
-            if (inputOptions.required && !normalizedValue) {
+            const validationLabel =
+                inputOptions.validationLabel ||
+                (
+                    typeof inputOptions.label === "string"
+                        ? inputOptions.label
+                        : "This field"
+                );
+
+            if (
+                inputOptions.required &&
+                !normalizedValue
+            ) {
                 setInputError(
                     inputOptions.requiredMessage ||
-                    `${inputOptions.label || "This field"} is required.`
+                    `${validationLabel} is required.`
                 );
+
                 return;
             }
 
             if (
                 normalizedValue &&
                 inputOptions.minLength &&
-                normalizedValue.length < inputOptions.minLength
+                normalizedValue.length <
+                inputOptions.minLength
             ) {
                 setInputError(
                     inputOptions.minLengthMessage ||
-                    `${inputOptions.label || "This field"} must contain at least ${inputOptions.minLength} characters.`
+                    `${validationLabel} must contain at least ${inputOptions.minLength} characters.`
                 );
+
                 return;
             }
 
             if (
                 normalizedValue &&
                 inputOptions.maxLength &&
-                normalizedValue.length > inputOptions.maxLength
+                normalizedValue.length >
+                inputOptions.maxLength
             ) {
                 setInputError(
                     inputOptions.maxLengthMessage ||
-                    `${inputOptions.label || "This field"} cannot exceed ${inputOptions.maxLength} characters.`
+                    `${validationLabel} cannot exceed ${inputOptions.maxLength} characters.`
                 );
+
                 return;
+            }
+
+            if (inputOptions.validate) {
+                const validationResult =
+                    inputOptions.validate(normalizedValue);
+
+                if (validationResult !== true) {
+                    setInputError(
+                        typeof validationResult === "string"
+                            ? validationResult
+                            : `${validationLabel} is invalid.`
+                    );
+
+                    return;
+                }
             }
         }
 
@@ -210,8 +241,8 @@ export default function ConfirmationProvider({ children }) {
                                                     id="confirmation-input"
                                                     type="text"
                                                     className={`form-control ${inputError
-                                                            ? "is-invalid"
-                                                            : ""
+                                                        ? "is-invalid"
+                                                        : ""
                                                         }`}
                                                     value={inputValue}
                                                     placeholder={
@@ -232,8 +263,8 @@ export default function ConfirmationProvider({ children }) {
                                                     ref={inputRef}
                                                     id="confirmation-input"
                                                     className={`form-control ${inputError
-                                                            ? "is-invalid"
-                                                            : ""
+                                                        ? "is-invalid"
+                                                        : ""
                                                         }`}
                                                     rows={
                                                         options.input.rows ?? 3

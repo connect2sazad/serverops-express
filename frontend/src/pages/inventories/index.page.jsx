@@ -28,11 +28,13 @@ const createColumns = ({
 }) => [
     {
       key: 'name',
-      label: 'Name'
+      label: 'Name',
+      hideable: false,
     },
     {
       key: 'hostname',
       label: 'Host',
+      hideable: false,
       render: inventory => `${inventory.hostname}:${inventory.ssh_port}`
     },
     {
@@ -47,6 +49,115 @@ const createColumns = ({
       key: 'last_connected_at',
       label: 'Last Connected',
       render: inventory => formatToIST(inventory.last_connected_at)
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      defaultVisible: false,
+    },
+    {
+      key: 'connection_status',
+      label: 'Connection Status',
+      defaultVisible: false,
+    },
+    {
+      key: 'discovered_hostname',
+      label: 'Discovered Hostname',
+      defaultVisible: false,
+    },
+    {
+      key: 'os_name',
+      label: 'OS Name',
+      defaultVisible: false,
+    },
+    {
+      key: 'os_version',
+      label: 'OS Version',
+      defaultVisible: false,
+    },
+    {
+      key: 'os_version_id',
+      label: 'OS Version ID',
+      defaultVisible: false,
+    },
+    {
+      key: 'kernel',
+      label: 'Kernel',
+      defaultVisible: false,
+    },
+    {
+      key: 'architecture',
+      label: 'Architecture',
+      defaultVisible: false,
+    },
+    {
+      key: 'cpu_cores',
+      label: 'CPU Cores',
+      defaultVisible: false,
+    },
+    {
+      key: 'memory_total_kib',
+      label: 'Memory',
+      defaultVisible: false,
+      render: inventory => {
+        let ram = inventory?.memory_total_kib;
+        if (ram) {
+          ram = ram / 1024 / 1024;
+          ram = ram.toFixed(2)
+          return ram + ' GiB';
+        }
+      }
+    },
+    {
+      key: 'uptime_seconds',
+      label: 'Uptime',
+      defaultVisible: false,
+      render: inventory => inventory.uptime_seconds != null ? inventory.uptime_seconds + 's' : '—'
+    },
+    {
+      key: 'remarks',
+      label: 'Remarks',
+      defaultVisible: false,
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      defaultVisible: false,
+      render: inventory => {
+        const tags = inventory.tags;
+        if (tags !== null && tags.length) {
+          return tags.map(tag => (
+            <span className="badge rounded-pill bg-blue m-1" key={tag}>
+              {tag}
+            </span>
+          ))
+        } else return '—'
+
+      }
+    },
+    {
+      key: 'inventory_collected_at',
+      label: 'Inventory Collected',
+      defaultVisible: false,
+      render: inventory => formatToIST(inventory.inventory_collected_at)
+    },
+    {
+      key: 'created_at',
+      label: 'Created At',
+      defaultVisible: false,
+      render: inventory => formatToIST(inventory.created_at)
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated At',
+      defaultVisible: false,
+      render: inventory => formatToIST(inventory.updated_at)
+    },
+    {
+      key: 'creator',
+      label: 'Creator',
+      defaultVisible: false,
+      render: inventory => '@' + inventory.creator.userid
     },
     {
       key: 'status',
@@ -93,7 +204,7 @@ const createColumns = ({
               {hasPermission(PERMISSIONS.CREDENTIALS_LIST) && (<Link className="m-1 btn btn-sm btn-secondary btn-blue" to={link_prefix + '/credentials'}><i className="bi bi-key"></i>&emsp;Credentials</Link>)}
               {hasPermission(PERMISSIONS.INVENTORIES_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(inventory)}><i className="bi bi-eye"></i>&emsp;View</button>)}
               {hasPermission(PERMISSIONS.INVENTORIES_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(inventory)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
-              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;{ deletePending ? 'Removing...' : 'Remove' }</button>)}
+              {hasPermission(PERMISSIONS.INVENTORIES_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(inventory)}><i className="bi bi-trash"></i>&emsp;{deletePending ? 'Removing...' : 'Remove'}</button>)}
 
             </>
           )
@@ -236,7 +347,7 @@ export default function InventoriesPage() {
   };
 
   const handleDelete = async inventory => {
-    const { confirmed } = await confirm({
+    const { confirmed, inputValue: deleteConfirmation } = await confirm({
       title: "Delete inventory?",
       message: (
         <>
@@ -248,10 +359,25 @@ export default function InventoriesPage() {
       ),
       confirmLabel: 'Delete',
       variant: 'danger',
+      input: {
+        label: (
+          <>
+            Type <strong>Delete</strong> for confirmation:
+          </>
+        ),
+        validationLabel: "Delete Confirmation",
+        placeholder: "Delete",
+        required: true,
+        type: 'text',
+        minLength: 6,
+        maxLength: 6,
+        requiredMessage: "Please type Delete to continue.",
+        validate: value => value === "Delete" || 'You must type "Delete" exactly.',
+      },
     });
 
-    if(!confirmed) return;
-
+    if (!confirmed) return;
+    
     deleteMutation.mutate(inventory.id);
   };
 
@@ -307,6 +433,7 @@ export default function InventoriesPage() {
 
 
       <DataTable
+        tableId="inventories"
         columns={columns}
         rows={inventories}
         loading={isPending}

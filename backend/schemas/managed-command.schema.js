@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import BaseSchema from './base.schema.js';
+import BaseSchema, { BaseCreateSchema, BaseUpdateSchema } from './base.schema.js';
 import { InventorySchema } from './inventory.schema.js';
 import { UserSchema } from './user.schema.js';
 
@@ -40,7 +40,7 @@ export const ManagedCommandSchema =
     });
 
 export const ManagedCommandCreateSchema =
-    z.object({
+    BaseCreateSchema.extend({
         name: CommandNameSchema,
 
         description: z.string()
@@ -60,7 +60,7 @@ export const ManagedCommandCreateSchema =
     });
 
 export const ManagedCommandUpdateSchema =
-    z.object({
+    BaseUpdateSchema.extend({
         name: CommandNameSchema.optional(),
 
         description: z.string()

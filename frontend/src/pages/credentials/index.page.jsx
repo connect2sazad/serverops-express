@@ -14,6 +14,7 @@ import { credential_list, credential_set_status, credential_create, credential_u
 import CreateModal from "./create.modal";
 import ViewModal from "./view.modal";
 import EditModal from "./edit.modal";
+import { formatToIST } from "../../components/helpers";
 
 // define columns for this list page
 const createColumns = ({
@@ -27,7 +28,8 @@ const createColumns = ({
 }) => [
     {
       key: 'username',
-      label: 'Username'
+      label: 'Username',
+      hideable: false
     },
     {
       key: 'type',
@@ -42,7 +44,49 @@ const createColumns = ({
     {
       key: 'credential',
       label: 'Inventory Hostname',
-      render: credential => credential.inventory.hostname
+      hideable: false,
+      render: credential => {
+        return `${credential.inventory.name} (${credential.inventory.hostname})`
+      }
+    },
+    {
+      key: 'remarks',
+      label: 'Remarks',
+      defaultVisible: false,
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      defaultVisible: false,
+      render: credential => {
+        const tags = credential.tags;
+        if (tags !== null && tags.length) {
+          return tags.map(tag => (
+            <span className="badge rounded-pill bg-blue m-1" key={tag}>
+              {tag}
+            </span>
+          ))
+        } else return '—'
+
+      }
+    },
+    {
+      key: 'created_at',
+      label: 'Created At',
+      defaultVisible: false,
+      render: credential => formatToIST(credential.created_at)
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated At',
+      defaultVisible: false,
+      render: credential => formatToIST(credential.updated_at)
+    },
+    {
+      key: 'creator',
+      label: 'Creator',
+      defaultVisible: false,
+      render: credential => '@' + credential.creator.userid
     },
     {
       key: 'status',
@@ -81,7 +125,7 @@ const createColumns = ({
             <>
               {hasPermission(PERMISSIONS.CREDENTIALS_READ) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onView(credential)}><i className="bi bi-eye"></i>&emsp;View</button>)}
               {hasPermission(PERMISSIONS.CREDENTIALS_UPDATE) && (<button className="m-1 btn btn-sm btn-secondary btn-blue" onClick={() => onEdit(credential)}><i className="bi bi-pencil"></i>&emsp;Edit</button>)}
-              {hasPermission(PERMISSIONS.CREDENTIALS_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(credential)}><i className="bi bi-trash"></i>&emsp;{ deletePending ? 'Removing...' : 'Remove' }</button>)}
+              {hasPermission(PERMISSIONS.CREDENTIALS_DELETE) && (<button className="m-1 btn btn-sm btn-secondary btn-red" onClick={() => onDelete(credential)}><i className="bi bi-trash"></i>&emsp;{deletePending ? 'Removing...' : 'Remove'}</button>)}
             </>
           )
         }
@@ -223,21 +267,37 @@ export default function CredentialsPage() {
   };
 
   const handleDelete = async credential => {
-    const { confirmed } = await confirm({
+    const { confirmed, inputValue: deleteConfirmation } = await confirm({
       title: "Delete credential?",
       message: (
         <>
-          You are about to delete {" "}
-          <strong>{credential.username}</strong>.
-          <br />
-          This action cannot be undone.
+          You are about to delete credential {" "}
+          <strong>{credential.username}</strong> for {" "}
+          <strong>{credential.inventory.name} ({credential.inventory.hostname})</strong>.
+          <br /><br />
+          This action cannot be undone and you might not be able to perform operations on this inventory.
         </>
       ),
       confirmLabel: 'Delete',
       variant: 'danger',
+      input: {
+        label: (
+          <>
+            Type <strong>Delete</strong> for confirmation:
+          </>
+        ),
+        validationLabel: "Delete Confirmation",
+        placeholder: "Delete",
+        required: true,
+        type: 'text',
+        minLength: 6,
+        maxLength: 6,
+        requiredMessage: "Please type Delete to continue.",
+        validate: value => value === "Delete" || 'You must type "Delete" exactly.',
+      },
     });
 
-    if(!confirmed) return;
+    if (!confirmed) return;
 
     deleteMutation.mutate(credential.id);
   };
@@ -294,6 +354,7 @@ export default function CredentialsPage() {
 
 
       <DataTable
+        tableId="credentials"
         columns={columns}
         rows={credentials}
         loading={isPending}
@@ -320,7 +381,7 @@ export default function CredentialsPage() {
         searchValue={search}
       />
 
-      {/* <CreateModal
+      <CreateModal
         open={modalOpen.create}
         submitting={createMutation.isPending}
         error={
@@ -338,9 +399,9 @@ export default function CredentialsPage() {
         }}
         onSubmit={values => createMutation.mutate(values)
         }
-      /> */}
+      />
 
-      {/* <EditModal
+      <EditModal
         open={modalOpen.edit}
         credentialId={selectedCredential?.id}
         submitting={updateMutation.isPending}
@@ -364,7 +425,7 @@ export default function CredentialsPage() {
           values,
         })
         }
-      /> */}
+      />
 
       <ViewModal
         open={modalOpen.view}

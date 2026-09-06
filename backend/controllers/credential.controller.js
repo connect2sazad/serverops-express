@@ -1,3 +1,11 @@
+import {
+    Op,
+    cast,
+    col,
+    fn,
+    literal,
+    where as sequelizeWhere,
+} from "sequelize";
 import BaseController from './base.controller.js';
 import { Credential, User, Inventory } from '../models/index.js';
 import { CredentialSchema, CredentialCreateSchema, CredentialUpdateSchema } from '../schemas/credential.schema.js';
@@ -24,6 +32,47 @@ class CredentialController extends BaseController {
                     as: 'inventory',
                 }
             ],
+            searchFields: [
+                "username",
+                "type",
+                "remarks"
+            ],
+            searchConditions: search => {
+                const normalizedSearch = search.toLowerCase();
+
+                return [
+                    // Case-insensitive tag search.
+                    sequelizeWhere(
+                        fn(
+                            "LOWER",
+                            cast(
+                                col("Inventory.tags"),
+                                "CHAR"
+                            )
+                        ),
+                        {
+                            [Op.like]: `%${normalizedSearch}%`,
+                        }
+                    ),
+
+                    // Search the displayed GiB memory value.
+                    sequelizeWhere(
+                        cast(
+                            fn(
+                                "ROUND",
+                                literal(
+                                    "Inventory.memory_total_kib / 1048576"
+                                ),
+                                2
+                            ),
+                            "CHAR"
+                        ),
+                        {
+                            [Op.like]: `%${normalizedSearch}%`,
+                        }
+                    ),
+                ];
+            }
         }
 
         super(Credential, settings);
@@ -143,7 +192,7 @@ class CredentialController extends BaseController {
                 }
 
                 // replace existing password
-                if(data.secret !== undefined){
+                if (data.secret !== undefined) {
                     updateData.secret = encryptor_service.encrypt(data.secret);
                 }
                 // set the passphrase to null
@@ -163,7 +212,7 @@ class CredentialController extends BaseController {
                 }
 
                 // checking if there is a private key file not uploaded and db has type password
-                if(credential.type !== 'private-key' && !req.file){
+                if (credential.type !== 'private-key' && !req.file) {
                     throw new AppException(
                         'A private key file is required when switching credential type.',
                         HTTP_STATUS.HTTP_400_BAD_REQUEST

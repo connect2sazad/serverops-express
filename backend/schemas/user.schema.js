@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import BaseSchema from './base.schema.js';
+import BaseSchema, { BaseCreateSchema, BaseUpdateSchema } from './base.schema.js';
 import { PermissionResponseSchema, UserRoleSchema, PermissionArraySchema } from './user-role.schema.js';
 
 // user response schema
@@ -18,7 +18,7 @@ export const UserSchema = BaseSchema.extend({
 });
 
 // user creation schema
-export const UserCreateSchema = z.object({
+export const UserCreateSchema = BaseCreateSchema.extend({
 
     name: z.string().min(3).max(100),
 
@@ -35,7 +35,7 @@ export const UserCreateSchema = z.object({
 });
 
 // user update schema
-export const UserUpdateSchema = z.object({
+export const UserUpdateSchema = BaseUpdateSchema.extend({
 
     name: z.string().min(2).max(100).optional(),
 

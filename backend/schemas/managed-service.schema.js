@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import BaseSchema from './base.schema.js';
+import BaseSchema, { BaseCreateSchema, BaseUpdateSchema } from './base.schema.js';
 import { UserSchema } from './user.schema.js';
 import { InventorySchema } from './inventory.schema.js';
 
@@ -27,7 +27,7 @@ export const ManagedServiceSchema = BaseSchema.extend({
 
 });
 
-export const ManagedServiceCreateSchema = z.object({
+export const ManagedServiceCreateSchema = BaseCreateSchema.extend({
     service_name: ServiceNameSchema,
 
     can_restart: z.boolean().default(false),
@@ -47,7 +47,7 @@ export const ManagedServiceCreateSchema = z.object({
     }
 );
 
-export const ManagedServiceUpdateSchema = z.object({
+export const ManagedServiceUpdateSchema = BaseUpdateSchema.extend({
     service_name: ServiceNameSchema.optional(),
     can_restart: z.boolean().optional(),
     can_start: z.boolean().optional(),

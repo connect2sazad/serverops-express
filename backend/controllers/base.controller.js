@@ -1,4 +1,9 @@
-import { Op } from 'sequelize';
+import {
+    Op,
+    col,
+    fn,
+    where as sequelizeWhere,
+} from "sequelize";
 
 import AppException from '../exceptions/exception.js';
 import HTTP_STATUS from '../exceptions/status_codes.js';
@@ -6,7 +11,7 @@ import { PaginationSchema } from '../schemas/pagination.schema.js';
 
 class BaseController {
 
-    constructor(model, { schema = null, createSchema = null, updateSchema = null, creator = false, includes = null, searchFields = [] } = {}) {
+    constructor(model, { schema = null, createSchema = null, updateSchema = null, creator = false, includes = null, searchFields = [], searchConditions = null } = {}) {
         this.model = model;
         this.schema = schema;
         this.createSchema = createSchema;
@@ -14,6 +19,7 @@ class BaseController {
         this.creator = creator;
         this.includes = includes;
         this.searchFields = searchFields;
+        this.searchConditions = searchConditions;
     }
 
     serialize(record, schema = this.schema) {
@@ -86,7 +92,7 @@ class BaseController {
 
     }
 
-    async getAllPaginatedRecords(req, res, next, where={}) {
+    async getAllPaginatedRecords(req, res, next, where = {}) {
 
         try {
 
@@ -119,24 +125,47 @@ class BaseController {
             }
 
             // search criteria
-            const searchCondition = search && this.searchFields.length > 0
-                ? {
-                    [Op.or]: this.searchFields.map(field => ({
-                        [field]: {
-                            [Op.like]: `%${search}%`
-                        },
-                    })),
-                }
-                : null;
-            
-                const finalWhere = searchCondition
+            const normalizedSearch = search?.toLowerCase();
+
+            const fieldConditions = normalizedSearch
+                ? this.searchFields.map(field =>
+                    sequelizeWhere(
+                        fn(
+                            "LOWER",
+                            col(`${this.model.name}.${field}`)
+                        ),
+                        {
+                            [Op.like]: `%${normalizedSearch}%`,
+                        }
+                    )
+                )
+                : [];
+
+            const customConditions =
+                search && this.searchConditions
+                    ? this.searchConditions(search)
+                    : [];
+
+            const allSearchConditions = [
+                ...fieldConditions,
+                ...customConditions,
+            ];
+
+            const searchCondition =
+                allSearchConditions.length > 0
                     ? {
-                        [Op.and]: [
-                            where,
-                            searchCondition
-                        ]
+                        [Op.or]: allSearchConditions,
                     }
-                    : where;
+                    : null;
+
+            const finalWhere = searchCondition
+                ? {
+                    [Op.and]: [
+                        where,
+                        searchCondition
+                    ]
+                }
+                : where;
 
             // retrieve this page & count all matching records
             const { count, rows } = await this.model.findAndCountAll({

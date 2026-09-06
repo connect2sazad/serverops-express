@@ -1,3 +1,5 @@
+import { useMemo, useState, useEffect, useRef } from "react";
+
 function getPageItems(currentPage, totalPages) {
     if (totalPages <= 7) {
         return Array.from(
@@ -50,6 +52,7 @@ function getPageItems(currentPage, totalPages) {
 
 
 export default function DataTable({
+    tableId,
     columns,
     rows = [],
     rowKey = 'id',
@@ -67,6 +70,153 @@ export default function DataTable({
     onSearch,
     searchValue = "",
 }) {
+
+    const storageKey = tableId ? `datatable-columns:${tableId}` : null;
+
+    const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
+
+    const columnsMenuRef = useRef(null);
+
+    const [columnVisibility, setColumnVisibility] = useState(() => {
+        const defaults = Object.fromEntries(
+            columns.map(column => [
+                column.key,
+                column.defaultVisible !== false,
+            ])
+        );
+
+        if (!storageKey) {
+            return defaults;
+        }
+
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem(storageKey)
+            );
+
+            return {
+                ...defaults,
+                ...(saved || {}),
+            };
+        } catch {
+            return defaults;
+        }
+    });
+
+    useEffect(() => {
+        if (!columnsMenuOpen) return undefined;
+
+        const handleOutsideClick = event => {
+            if (
+                columnsMenuRef.current &&
+                !columnsMenuRef.current.contains(event.target)
+            ) {
+                setColumnsMenuOpen(false);
+            }
+        };
+
+        const handleKeyDown = event => {
+            if (event.key === "Escape") {
+                setColumnsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener(
+            "mousedown",
+            handleOutsideClick
+        );
+
+        window.addEventListener(
+            "keydown",
+            handleKeyDown
+        );
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleOutsideClick
+            );
+
+            window.removeEventListener(
+                "keydown",
+                handleKeyDown
+            );
+        };
+    }, [columnsMenuOpen]);
+
+    useEffect(() => {
+        setColumnVisibility(current => {
+            const next = {};
+
+            columns.forEach(column => {
+                next[column.key] =
+                    current[column.key] ??
+                    column.defaultVisible !== false;
+            });
+
+            return next;
+        });
+    }, [columns]);
+
+    useEffect(() => {
+        if (!storageKey) return;
+
+        localStorage.setItem(
+            storageKey,
+            JSON.stringify(columnVisibility)
+        );
+    }, [storageKey, columnVisibility]);
+
+    const visibleColumns = useMemo(
+        () =>
+            columns.filter(
+                column =>
+                    columnVisibility[column.key] !== false
+            ),
+        [columns, columnVisibility]
+    );
+
+    const selectAllColumns = () => {
+        setColumnVisibility(
+            Object.fromEntries(
+                columns.map(column => [
+                    column.key,
+                    true,
+                ])
+            )
+        );
+    };
+
+    const deselectAllColumns = () => {
+        setColumnVisibility(
+            Object.fromEntries(
+                columns.map(column => [
+                    column.key,
+                    column.hideable === false,
+                ])
+            )
+        );
+    };
+
+    const resetDefaultColumns = () => {
+        setColumnVisibility(
+            Object.fromEntries(
+                columns.map(column => [
+                    column.key,
+
+                    column.hideable === false ||
+                    column.defaultVisible !== false,
+                ])
+            )
+        );
+    };
+
+    const toggleColumn = key => {
+        setColumnVisibility(current => ({
+            ...current,
+            [key]: !current[key],
+        }));
+    };
 
     const getRowKey = row =>
         typeof rowKey === 'function' ? rowKey(row) : row[rowKey];
@@ -124,6 +274,120 @@ export default function DataTable({
                     </div>
 
                     <div>
+                        <div
+                            ref={columnsMenuRef}
+                            className="position-relative d-inline-block mx-1"
+                        >
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                aria-expanded={columnsMenuOpen}
+                                aria-haspopup="menu"
+                                onClick={() =>
+                                    setColumnsMenuOpen(open => !open)
+                                }
+                            >
+                                <i className="bi bi-layout-three-columns me-2" />
+                                Columns
+                            </button>
+
+                            {columnsMenuOpen && (
+                                <div
+                                    className="dropdown-menu dropdown-menu-end show p-3"
+                                    role="menu"
+                                    style={{
+                                        position: "absolute",
+                                        right: 0,
+                                        left: "auto",
+                                        minWidth: "240px",
+                                        maxHeight: "360px",
+                                        overflowY: "auto",
+                                        zIndex: 1050,
+                                    }}
+                                >
+                                    <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                        <span className="fw-semibold">
+                                            Visible columns
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            aria-label="Close columns menu"
+                                            onClick={() =>
+                                                setColumnsMenuOpen(false)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="d-flex gap-2 mb-3">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-primary"
+                                            onClick={selectAllColumns}
+                                        >
+                                            Select all
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary"
+                                            onClick={deselectAllColumns}
+                                        >
+                                            Deselect all
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary"
+                                            onClick={resetDefaultColumns}
+                                        >
+                                            Default
+                                        </button>
+                                    </div>
+
+                                    <hr className="my-2" />
+
+                                    {columns.map(column => {
+                                        const locked =
+                                            column.hideable === false;
+
+                                        return (
+                                            <div
+                                                key={column.key}
+                                                className="form-check mb-2"
+                                            >
+                                                <input
+                                                    id={`${tableId}-${column.key}-visibility`}
+                                                    type="checkbox"
+                                                    className="form-check-input"
+                                                    checked={
+                                                        columnVisibility[column.key] !==
+                                                        false
+                                                    }
+                                                    disabled={locked}
+                                                    onChange={() =>
+                                                        toggleColumn(column.key)
+                                                    }
+                                                />
+
+                                                <label
+                                                    className="form-check-label"
+                                                    htmlFor={`${tableId}-${column.key}-visibility`}
+                                                >
+                                                    {column.label}
+
+                                                    {locked && (
+                                                        <small className="text-secondary ms-1">
+                                                            (required)
+                                                        </small>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                         {onCreate && (
                             <button
                                 type="button"
@@ -165,7 +429,7 @@ export default function DataTable({
                                 <table className="table align-middle" aria-busy={refreshing}>
                                     <thead>
                                         <tr>
-                                            {columns.map(column => (
+                                            {visibleColumns.map(column => (
                                                 <th scope="col" key={column.key}>
                                                     {column.label}
                                                 </th>
@@ -180,7 +444,7 @@ export default function DataTable({
                                         {rows.map(row => (
                                             <tr key={getRowKey(row)}>
                                                 {
-                                                    columns.map(column => (
+                                                    visibleColumns.map(column => (
                                                         <td key={column.key}>
                                                             {
                                                                 column.render ? column.render(row) : row[column.key] ?? '—'

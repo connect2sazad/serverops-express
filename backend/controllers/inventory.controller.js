@@ -1,5 +1,14 @@
+import {
+    Op,
+    cast,
+    col,
+    fn,
+    literal,
+    where as sequelizeWhere,
+} from "sequelize";
 import sequelize from '../config/sequelize.js';
 import BaseController from './base.controller.js';
+
 import { Inventory, User, Credential } from '../models/index.js';
 import { InventoryCreateSchema, InventorySchema, InventoryUpdateSchema } from '../schemas/inventory.schema.js';
 import { CredentialSchema } from '../schemas/credential.schema.js';
@@ -25,15 +34,56 @@ export class InventoryController extends BaseController {
                 }
             ],
             searchFields: [
-                'name',
-                'hostname',
-                'environment',
-                'operating_system',
-                'description',
-                'remarks',
-                'discovered_hostname',
-                'os_name'
-            ]
+                "name",
+                "hostname",
+                "environment",
+                "operating_system",
+                "description",
+                "remarks",
+                "discovered_hostname",
+                "os_name",
+                "os_version",
+                "os_version_id",
+                "kernel",
+                "architecture",
+                "remarks"
+            ],
+            searchConditions: search => {
+                const normalizedSearch = search.toLowerCase();
+
+                return [
+                    // Case-insensitive tag search.
+                    sequelizeWhere(
+                        fn(
+                            "LOWER",
+                            cast(
+                                col("Inventory.tags"),
+                                "CHAR"
+                            )
+                        ),
+                        {
+                            [Op.like]: `%${normalizedSearch}%`,
+                        }
+                    ),
+
+                    // Search the displayed GiB memory value.
+                    sequelizeWhere(
+                        cast(
+                            fn(
+                                "ROUND",
+                                literal(
+                                    "Inventory.memory_total_kib / 1048576"
+                                ),
+                                2
+                            ),
+                            "CHAR"
+                        ),
+                        {
+                            [Op.like]: `%${normalizedSearch}%`,
+                        }
+                    ),
+                ];
+            }
         });
     }
 

@@ -11,9 +11,6 @@ import { API_FULL_URL } from '../config/config';
 export const apiClient = axios.create({
     baseURL: API_FULL_URL,
     timeout: 10000,
-    headers: {
-        "Content-Type": "application/json"
-    },
 });
 
 apiClient.interceptors.request.use(

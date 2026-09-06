@@ -40,15 +40,35 @@ export async function credential_set_status(id, enabled) {
 
 export async function credential_create(data) {
 
-    const payload = {
-        ...data,
-        operating_system: data.operating_system || undefined,
-        description: data.description || undefined,
-    };
+    const formData = new FormData();
+
+    formData.append('inventory_id', String(data.inventory_id));
+    formData.append('username', data.username.trim());
+    formData.append('type', data.type);
+
+    if (data.type === 'password')
+        formData.append('secret', data.secret);
+
+
+    if (data.type === 'private-key' && data.private_key instanceof File)
+        formData.append('private_key', data.private_key);
+
+
+    if (data.passphrase?.trim())
+        formData.append('passphrase', data.passphrase);
+
+
+    if (data.remarks?.trim())
+        formData.append('remarks', data.remarks.trim())
+
+
+    formData.append('tags',
+        JSON.stringify(Array.isArray(data.tags) ? data.tags : [])
+    );
 
     const response = await apiClient.post(
         ROUTE,
-        payload
+        formData
     );
 
     return response.data.data;
@@ -56,17 +76,37 @@ export async function credential_create(data) {
 
 export async function credential_update(id, data) {
 
-    const payload = {
-        ...data,
-        operating_system: data.operating_system?.trim() || null,
-        description: data.description?.trim() || null,
-        remarks: data.remarks?.trim() || null,
-        tags: Array.isArray(data.tags) ? data.tags : [],
-    };
+    const formData = new FormData();
+
+    if (data.inventory_id !== undefined)
+        formData.append('inventory_id', String(data.inventory_id));
+
+
+    if (data.username?.trim())
+        formData.append('username', data.username.trim());
+
+    if (data.type)
+        formData.append('type', data.type);
+
+    if (data.type === 'password' && data.secret?.trim())
+        formData.append('secret', data.secret);
+
+
+    if (data.type === 'private-key' && data.private_key instanceof File)
+        formData.append('private_key', data.private_key);
+
+    if (data.passphrase !== undefined)
+        formData.append('passphrase', data.passphrase?.trim() || '');
+
+    formData.append('remarks', data.remarks.trim() || '')
+
+    formData.append('tags',
+        JSON.stringify(Array.isArray(data.tags) ? data.tags : [])
+    );
 
     const response = await apiClient.put(
         `${ROUTE}/${id}/`,
-        payload
+        formData
     );
 
     return response.data.data;
@@ -78,5 +118,5 @@ export async function credential_delete(id) {
         `${ROUTE}/${id}/`
     );
 
-    return response.data.data;
+    return response.data;
 }

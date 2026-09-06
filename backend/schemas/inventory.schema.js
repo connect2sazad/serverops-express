@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import BaseSchema, { JsonStringArraySchema, TagsSchema } from './base.schema.js';
+import BaseSchema, { JsonStringArraySchema, BaseCreateSchema, BaseUpdateSchema } from './base.schema.js';
 import { UserSchema } from './user.schema.js';
 
 
@@ -48,7 +48,7 @@ export const InventorySchema = BaseSchema.extend({
 });
 
 // Inventory creation schema
-export const InventoryCreateSchema = z.object({
+export const InventoryCreateSchema = BaseCreateSchema.extend({
     
     name: z.string().trim().min(3).max(100),
     hostname: z.string().min(1).max(100),
@@ -59,12 +59,10 @@ export const InventoryCreateSchema = z.object({
     connection_status: z.enum(['connected', 'disconnected', 'unknown']).default('unknown'),
     last_connected_at: z.coerce.date().nullable().default(null),
 
-    tags: TagsSchema.default([]),
-    remarks: z.string().trim().max(1000).nullable().optional(),
 });
 
 // Inventory update schema
-export const InventoryUpdateSchema = z.object({
+export const InventoryUpdateSchema = BaseUpdateSchema.extend({
 
     name: z.string().min(3).max(100).optional(),
     hostname: z.string().min(1).max(100).optional(),
@@ -72,8 +70,5 @@ export const InventoryUpdateSchema = z.object({
     environment: z.string().min(1).max(100).optional(),
     operating_system: z.string().trim().min(1).max(100).nullable().optional(),
     description: z.string().trim().max(1000).nullable().optional(),
-
-    tags: TagsSchema.optional(),
-    remarks: z.string().trim().max(1000).nullable().optional(),
 
 });

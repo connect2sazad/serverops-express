@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import BaseSchema from './base.schema.js';
+import BaseSchema, { BaseCreateSchema, BaseUpdateSchema } from './base.schema.js';
 import { UserSchema } from './user.schema.js';
 import { InventorySchema } from './inventory.schema.js';
 
@@ -17,7 +17,7 @@ export const CredentialSchema = BaseSchema.extend({
 });
 
 // Credential creation schema
-export const CredentialCreateSchema = z.object({
+export const CredentialCreateSchema = BaseCreateSchema.extend({
 
     inventory_id: z.coerce.number().int(),
     username: z.string().min(1).max(100),
@@ -38,7 +38,7 @@ export const CredentialCreateSchema = z.object({
 });
 
 // Credential update schema
-export const CredentialUpdateSchema = z.object({
+export const CredentialUpdateSchema = BaseUpdateSchema.extend({
 
     inventory_id: z.coerce.number().int().optional(),
     username: z.string().min(1).max(100).optional(),
