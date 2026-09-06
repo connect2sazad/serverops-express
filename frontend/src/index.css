@@ -239,6 +239,16 @@ textarea {
   color: red;
 }
 
+.btn-yellow {
+  background-color: yellow;
+  color: black;
+}
+
+.btn-yellow:hover {
+  background-color: black;
+  color: yellow;
+}
+
 .txt-blue {
   color: blue
 }

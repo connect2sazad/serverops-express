@@ -80,3 +80,39 @@ export async function inventory_delete(id) {
 
     return response.data.data;
 }
+
+export async function inventory_host_key_inspect(id) {
+
+    const response = await apiClient.get(
+        `${ROUTE}/${id}/host-key`
+    );
+
+    return response.data.data;
+}
+
+export async function inventory_host_key_trust(id, fingerprint) {
+    const response = await apiClient.post(
+        `${ROUTE}/${id}/host-key/trust`,
+        {
+            fingerprint,
+        }
+    );
+
+    return response.data;
+}
+
+export async function inventory_test_connection(id) {
+    const response = await apiClient.get(
+        `${ROUTE}/${id}/test-connection`
+    );
+
+    return response.data;
+}
+
+export async function inventory_discovery(id) {
+    const response = await apiClient.get(
+        `${ROUTE}/${id}/discovery`
+    );
+
+    return response.data;
+}

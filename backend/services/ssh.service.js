@@ -168,37 +168,176 @@ class SSHService {
     }
 
     // function to get fingerprint in case of a new server in inventory
-    async getHostKeyFingerprint(inventory, credential) {
-        let fingerprint = null;
+    // async getHostKeyFingerprint(inventory, credential) {
+    //     let fingerprint = null;
 
-        const hostVerifier = key => {
-            fingerprint = getFingerprint(key);
+    //     const hostVerifier = key => {
+    //         fingerprint = getFingerprint(key);
 
-            // Only used for discovering the host fingerprint.
-            return true;
-        };
+    //         // Only used for discovering the host fingerprint.
+    //         return true;
+    //     };
 
-        const config = await this.buildConfig(
-            inventory,
-            credential,
-            hostVerifier
-        );
+    //     const config = await this.buildConfig(
+    //         inventory,
+    //         credential,
+    //         hostVerifier
+    //     );
 
-        try {
-            const client = await this.connect(config);
+    //     try {
+    //         const client = await this.connect(config);
 
-            client.end();
+    //         client.end();
 
-            return {
-                fingerprint,
-            };
-        } catch (error) {
-            throw {
-                code: 'SSH_CONNECTION_FAILED',
-                error,
-                fingerprint,
-            };
+    //         return {
+    //             fingerprint,
+    //         };
+    //     } catch (error) {
+    //         throw {
+    //             code: 'SSH_CONNECTION_FAILED',
+    //             error,
+    //             fingerprint,
+    //         };
+    //     }
+    // }
+
+    async inspectHostKey(inventory) {
+        if (!inventory) {
+            throw new AppException(
+                "Inventory not found.",
+                HTTP_STATUS.HTTP_404_NOT_FOUND
+            );
         }
+
+        if (!inventory.status) {
+            throw new AppException(
+                "Inventory has been disabled.",
+                HTTP_STATUS.HTTP_403_FORBIDDEN
+            );
+        }
+
+        return new Promise((resolve, reject) => {
+            const client = new Client();
+
+            let settled = false;
+            let presentedFingerprint = null;
+            let timer = null;
+
+            const finish = (error, result = null) => {
+                if (settled) return;
+
+                settled = true;
+                clearTimeout(timer);
+
+                /*
+                 * Keep the error listener installed while destroying
+                 * the client. ssh2 may emit another error while closing.
+                 */
+                client.destroy();
+
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            };
+
+            const completeFromFingerprint = () => {
+                if (!presentedFingerprint) {
+                    return false;
+                }
+
+                finish(null, {
+                    fingerprint: presentedFingerprint,
+                });
+
+                return true;
+            };
+
+            client.on("error", error => {
+                if (settled) return;
+
+                /*
+                 * Returning false from hostVerifier intentionally causes
+                 * ssh2 to emit "Host denied (verification failed)".
+                 * If we already captured the fingerprint, inspection
+                 * succeeded.
+                 */
+                if (completeFromFingerprint()) {
+                    return;
+                }
+
+                finish(
+                    this.normalizeConnectionError(
+                        inventory,
+                        null,
+                        error
+                    )
+                );
+            });
+
+            client.once("close", () => {
+                if (settled) return;
+
+                if (completeFromFingerprint()) {
+                    return;
+                }
+
+                finish(
+                    new AppException(
+                        "SSH connection closed before a host key was received.",
+                        HTTP_STATUS.HTTP_502_BAD_GATEWAY,
+                        {
+                            code: "SSH_HOST_KEY_UNAVAILABLE",
+                            expose: true,
+                        }
+                    )
+                );
+            });
+
+            timer = setTimeout(() => {
+                finish(
+                    new AppException(
+                        "Timed out while retrieving the SSH host key.",
+                        HTTP_STATUS.HTTP_504_GATEWAY_TIMEOUT,
+                        {
+                            code: "SSH_HOST_KEY_TIMEOUT",
+                            expose: true,
+                        }
+                    )
+                );
+            }, 10000);
+
+            const config = {
+                host: inventory.hostname,
+                port: inventory.ssh_port ?? 22,
+                username: "host-key-inspection",
+                readyTimeout: 10000,
+
+                hostVerifier: key => {
+                    presentedFingerprint =
+                        this.fingerprintFromKey(key);
+
+                    /*
+                     * Stop before authentication. The resulting host
+                     * verification error is expected and handled above.
+                     */
+                    return false;
+                },
+            };
+
+            try {
+                client.connect(config);
+            } catch (error) {
+                finish(
+                    this.normalizeConnectionError(
+                        inventory,
+                        null,
+                        error
+                    )
+                );
+            }
+        });
     }
 
     // fucntion to execute commands

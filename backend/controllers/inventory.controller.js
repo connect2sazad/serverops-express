@@ -193,30 +193,70 @@ export class InventoryController extends BaseController {
     }
 
     async hostKey(req, res, next) {
-
         try {
-
-            const { id } = req.params
-
             const inventory = await Inventory.findOne({
                 where: {
-                    id,
-                    deleted_at: null
-                }
+                    id: req.params.id,
+                    deleted_at: null,
+                },
             });
 
-            res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
-                success: true,
-                message: "connection successfull",
-                data: {
-                    host_key: inventory.ssh_host_key_fingerprint
-                }
-            });
+            if (!inventory) {
+                throw new AppException(
+                    "Inventory not found.",
+                    HTTP_STATUS.HTTP_404_NOT_FOUND
+                );
+            }
 
-        } catch (e) {
-            next(e);
+            if (!inventory.status) {
+                throw new AppException(
+                    "Inventory has been disabled.",
+                    HTTP_STATUS.HTTP_403_FORBIDDEN
+                );
+            }
+
+            const {
+                fingerprint: presentedFingerprint,
+            } = await ssh_service.inspectHostKey(inventory);
+
+            const trustedFingerprint =
+                inventory.ssh_host_key_fingerprint;
+
+            let trustStatus = "not-trusted";
+
+            if (trustedFingerprint) {
+                trustStatus =
+                    trustedFingerprint === presentedFingerprint
+                        ? "trusted"
+                        : "mismatch";
+            }
+
+            return res
+                .status(HTTP_STATUS.HTTP_200_OK.status_code)
+                .json({
+                    success: true,
+                    message:
+                        "SSH host-key fingerprint inspected successfully.",
+                    data: {
+                        inventory: {
+                            id: inventory.id,
+                            name: inventory.name,
+                            hostname: inventory.hostname,
+                            ssh_port: inventory.ssh_port,
+                        },
+
+                        presented_fingerprint:
+                            presentedFingerprint,
+
+                        trusted_fingerprint:
+                            trustedFingerprint,
+
+                        trust_status: trustStatus,
+                    },
+                });
+        } catch (error) {
+            next(error);
         }
-
     }
 
     async hostKeyTrust(req, res, next) {
@@ -242,6 +282,21 @@ export class InventoryController extends BaseController {
                 throw new AppException(
                     'Inventory has been disabled.',
                     HTTP_STATUS.HTTP_403_FORBIDDEN
+                );
+            }
+
+            const {
+                fingerprint: presentedFingerprint,
+            } = await ssh_service.inspectHostKey(inventory);
+
+            if (presentedFingerprint !== fingerprint) {
+                throw new AppException(
+                    "The SSH host key changed during approval. Inspect it again before trusting it.",
+                    HTTP_STATUS.HTTP_409_CONFLICT,
+                    {
+                        code: "SSH_HOST_KEY_CHANGED_DURING_APPROVAL",
+                        expose: true,
+                    }
                 );
             }
 
@@ -338,7 +393,7 @@ export class InventoryController extends BaseController {
 
             res.status(HTTP_STATUS.HTTP_200_OK.status_code).json({
                 success: true,
-                message: "connection successfull",
+                message: "SSH Connection Successfull",
                 data: {
                     connection,
                     inventory: InventorySchema.parse(inventory.toJSON()),

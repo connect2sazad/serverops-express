@@ -49,57 +49,25 @@ export default function EditModal({
             search: inputValue.trim(),
         });
 
-        return response.data.map(inventory => {
-            const memoryGiB =
-                inventory.memory_total_kib != null
-                    ? (
-                        inventory.memory_total_kib /
-                        1024 /
-                        1024
-                    ).toFixed(2)
-                    : null;
-
-            const tags = Array.isArray(inventory.tags)
-                ? inventory.tags
-                : [];
-
-            const details = [
-                inventory.operating_system,
-                inventory.kernel
-                    ? `Kernel ${inventory.kernel}`
-                    : null,
-                inventory.architecture,
-                memoryGiB
-                    ? `${memoryGiB} GiB RAM`
-                    : null,
-                inventory.environment,
-            ].filter(Boolean);
-
-            return {
-                value: inventory.id,
-                label: `${inventory.name} — ${inventory.hostname}:${inventory.ssh_port}`,
-                description:
-                    details.length > 0
-                        ? details.join(" · ")
-                        : "System information not discovered",
-                tags,
-                inventory,
-            };
-        });
+        return response.data.map(toInventoryOption);
     };
 
     useEffect(() => {
         if (!open || !credential) return;
 
         reset({
-            inventory: credential.inventory,
-            username: credential.username,
+            inventory: toInventoryOption(
+                credential.inventory
+            ),
+            username: credential.username ?? "",
             type: credential.type,
-            secret: '',
+            secret: "",
             private_key: null,
-            passphrase: '',
-            remarks: credential.remarks ?? '',
-            tags: Array.isArray(credential.tags) ? credential.tags : []
+            passphrase: "",
+            remarks: credential.remarks ?? "",
+            tags: Array.isArray(credential.tags)
+                ? credential.tags
+                : [],
         });
 
     }, [open, credential, reset]);
@@ -133,6 +101,46 @@ export default function EditModal({
     }
 
     if (!open) return null;
+
+    function toInventoryOption(inventory) {
+        if (!inventory) return null;
+
+        const memoryGiB =
+            inventory.memory_total_kib != null
+                ? (
+                    inventory.memory_total_kib /
+                    1024 /
+                    1024
+                ).toFixed(2)
+                : null;
+
+        const tags = Array.isArray(inventory.tags)
+            ? inventory.tags
+            : [];
+
+        const details = [
+            inventory.operating_system,
+            inventory.kernel
+                ? `Kernel ${inventory.kernel}`
+                : null,
+            inventory.architecture,
+            memoryGiB
+                ? `${memoryGiB} GiB RAM`
+                : null,
+            inventory.environment,
+        ].filter(Boolean);
+
+        return {
+            value: inventory.id,
+            label: `${inventory.name} — ${inventory.hostname}:${inventory.ssh_port}`,
+            description:
+                details.length > 0
+                    ? details.join(" · ")
+                    : "System information not discovered",
+            tags,
+            inventory,
+        };
+    }
 
     return (
         <>
