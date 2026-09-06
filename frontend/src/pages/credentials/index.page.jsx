@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
 
 import { getApiError } from "../../api/api-error";
@@ -26,6 +25,11 @@ const createColumns = ({
   onDelete,
   deletePending,
 }) => [
+    {
+      key: "serial_number",
+      label: "Sl. No.",
+      hideable: false,
+    },
     {
       key: 'username',
       label: 'Username',
@@ -267,7 +271,7 @@ export default function CredentialsPage() {
   };
 
   const handleDelete = async credential => {
-    const { confirmed, inputValue: deleteConfirmation } = await confirm({
+    const { confirmed } = await confirm({
       title: "Delete credential?",
       message: (
         <>
@@ -340,8 +344,31 @@ export default function CredentialsPage() {
   });
 
   // separate pagination and data
-  const credentials = data?.data || [];
   const pagination = data?.pagination;
+
+  const credentials = useMemo(() => {
+    const records = data?.data ?? [];
+
+    const currentPage =
+      pagination?.page ?? page;
+
+    const currentPageSize =
+      pagination?.page_size ?? pageSize;
+
+    const startIndex =
+      (currentPage - 1) * currentPageSize;
+
+    return records.map((credential, index) => ({
+      ...credential,
+      serial_number: startIndex + index + 1,
+    }));
+  }, [
+    data?.data,
+    pagination?.page,
+    pagination?.page_size,
+    page,
+    pageSize,
+  ]);
 
   return (
     <>

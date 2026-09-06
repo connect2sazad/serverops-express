@@ -6,18 +6,18 @@ import { toast } from "react-toastify";
 import useConfirmation from "../../hooks/useConfirmation";
 import { useAuth } from "../../hooks/useAuth";
 import DataTable from "../../components/data-table";
-import { inventory_read } from "../../api/inventories";
-import { service_list, service_action } from "../../api/services";
+import { process_list, process_action } from "../../api/processes";
 import { getApiError } from "../../api/api-error";
 
 import ViewModal from './view.modal';
 import { PERMISSIONS } from "../../config/permissions";
+import { inventory_read } from "../../api/inventories";
 
 const createColumns = ({
   hasPermission,
   onView,
   onAction,
-  runningAction
+  runningAction,
 }) => [
     {
       key: "serial_number",
@@ -25,75 +25,93 @@ const createColumns = ({
       hideable: false,
     },
     {
-      key: "name",
-      label: "Service",
+      key: "pid",
+      label: "PID",
       hideable: false,
     },
     {
-      key: "unit",
-      label: "Unit",
+      key: "user",
+      label: "User",
     },
     {
-      key: "description",
-      label: "Description",
+      key: "cpu_percent",
+      label: "CPU",
+      render: process =>
+        `${process.cpu_percent}%`,
+    },
+    {
+      key: "memory_percent",
+      label: "Memory",
+      render: process =>
+        `${process.memory_percent}%`,
+    },
+    {
+      key: "resident_memory",
+      label: "RSS",
+      defaultVisible: false,
+      render: process =>
+        `${(process.resident_memory / 1024).toFixed(2)} MiB`,
+    },
+    {
+      key: "virtual_memory",
+      label: "VSZ",
+      defaultVisible: false,
+      render: process =>
+        `${(process.virtual_memory / 1024).toFixed(2)} MiB`,
+    },
+    {
+      key: "state",
+      label: "State",
+    },
+    {
+      key: "tty",
+      label: "TTY",
       defaultVisible: false,
     },
     {
-      key: "load",
-      label: "Load",
-      render: service => (
-        <span
-          className={`badge ${service.load === "loaded"
-            ? "text-bg-success"
-            : "text-bg-secondary"
-            }`}
-        >
-          {service.load}
-        </span>
-      ),
+      key: "started_at",
+      label: "Started",
+      defaultVisible: false,
     },
     {
-      key: "active",
-      label: "Active State",
-      render: service => (
-        <span
-          className={`badge ${service.active === "active"
-            ? "text-bg-success"
-            : service.active === "failed"
-              ? "text-bg-danger"
-              : "text-bg-secondary"
-            }`}
-        >
-          {service.active}
-        </span>
-      ),
+      key: "cpu_time",
+      label: "CPU Time",
     },
     {
-      key: "sub",
-      label: "Sub State",
+      key: "command",
+      label: "Command",
+      render: process => (
+        <span
+          className="font-monospace text-break"
+          title={process.command}
+        >
+          {process.command}
+        </span>
+      ),
     },
     {
       key: "actions",
       label: "Actions",
       hideable: false,
-      render: service => {
-        const isRunning = action =>
-          runningAction ===
-          `${service.name}:${action}`;
+      render: process => {
+        const terminateKey =
+          `${process.pid}:terminate`;
 
-        const anyActionRunning =
-          runningAction !== null;
+        const killKey =
+          `${process.pid}:force_kill`;
+
+        const busy = runningAction !== null;
 
         return (
           <div className="d-flex flex-wrap gap-1">
             {hasPermission(
-              PERMISSIONS.SERVICES_READ
+              PERMISSIONS.PROCESSES_READ
             ) && (
                 <button
                   type="button"
                   className="btn btn-sm btn-secondary btn-blue"
-                  disabled={anyActionRunning}
-                  onClick={() => onView(service)}
+                  disabled={busy}
+                  onClick={() => onView(process)}
                 >
                   <i className="bi bi-eye me-1" />
                   View
@@ -101,101 +119,38 @@ const createColumns = ({
               )}
 
             {hasPermission(
-              PERMISSIONS.SERVICES_START
-            ) && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-success"
-                  disabled={
-                    anyActionRunning ||
-                    service.active === "active"
-                  }
-                  onClick={() =>
-                    onAction(service, "start")
-                  }
-                >
-                  <i className="bi bi-play-fill me-1" />
-                  {isRunning("start")
-                    ? "Starting…"
-                    : "Start"}
-                </button>
-              )}
-
-            {hasPermission(
-              PERMISSIONS.SERVICES_STOP
-            ) && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger"
-                  disabled={
-                    anyActionRunning ||
-                    service.active !== "active"
-                  }
-                  onClick={() =>
-                    onAction(service, "stop")
-                  }
-                >
-                  <i className="bi bi-stop-fill me-1" />
-                  {isRunning("stop")
-                    ? "Stopping…"
-                    : "Stop"}
-                </button>
-              )}
-
-            {hasPermission(
-              PERMISSIONS.SERVICES_RESTART
+              PERMISSIONS.PROCESSES_TERMINATE
             ) && (
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-warning"
-                  disabled={
-                    anyActionRunning ||
-                    service.active !== "active"
-                  }
+                  disabled={busy || process.pid <= 1}
                   onClick={() =>
-                    onAction(service, "restart")
+                    onAction(process, "terminate")
                   }
                 >
-                  <i className="bi bi-arrow-clockwise me-1" />
-                  {isRunning("restart")
-                    ? "Restarting…"
-                    : "Restart"}
+                  <i className="bi bi-x-circle me-1" />
+                  {runningAction === terminateKey
+                    ? "Terminating…"
+                    : "Terminate"}
                 </button>
               )}
 
             {hasPermission(
-              PERMISSIONS.SERVICES_ENABLE
+              PERMISSIONS.PROCESSES_KILL
             ) && (
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-primary"
-                  disabled={anyActionRunning}
+                  className="btn btn-sm btn-outline-danger"
+                  disabled={busy || process.pid <= 1}
                   onClick={() =>
-                    onAction(service, "enable")
+                    onAction(process, "force_kill")
                   }
                 >
-                  <i className="bi bi-toggle-on me-1" />
-                  {isRunning("enable")
-                    ? "Enabling…"
-                    : "Enable"}
-                </button>
-              )}
-
-            {hasPermission(
-              PERMISSIONS.SERVICES_DISABLE
-            ) && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary"
-                  disabled={anyActionRunning}
-                  onClick={() =>
-                    onAction(service, "disable")
-                  }
-                >
-                  <i className="bi bi-toggle-off me-1" />
-                  {isRunning("disable")
-                    ? "Disabling…"
-                    : "Disable"}
+                  <i className="bi bi-exclamation-octagon me-1" />
+                  {runningAction === killKey
+                    ? "Killing…"
+                    : "Force Kill"}
                 </button>
               )}
           </div>
@@ -204,20 +159,20 @@ const createColumns = ({
     },
   ];
 
-export default function ServicesPage() {
+export default function ProcessesPage() {
   const { id } = useParams();
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
   const { hasPermission } = useAuth();
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedProcess, setSelectedProcess] = useState(null);
   const queryClient = useQueryClient();
   const { confirm } = useConfirmation();
   const [runningAction, setRunningAction] = useState(null);
 
   useEffect(() => {
-    document.title = "Services | ServerOps";
+    document.title = "Processes | ServerOps";
   }, []);
 
   const {
@@ -228,8 +183,8 @@ export default function ServicesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["inventory_services", id],
-    queryFn: () => service_list(id),
+    queryKey: ["inventory_processes", id],
+    queryFn: () => process_list(id),
     enabled: Boolean(id),
     retry: false,
     staleTime: 0,
@@ -247,34 +202,37 @@ export default function ServicesPage() {
     retry: false,
   });
 
-  const services = data?.data?.services ?? [];
+  const processes = data?.data?.processes ?? [];
   const metadata = data?.data?.metadata;
 
-  const filteredServices = useMemo(() => {
+  const filteredProcesses = useMemo(() => {
     const normalizedSearch =
       search.trim().toLowerCase();
 
     if (!normalizedSearch) {
-      return services;
+      return processes;
     }
 
-    return services.filter(service =>
+    return processes.filter(process =>
       [
-        service.name,
-        service.unit,
-        service.description,
-        service.load,
-        service.active,
-        service.sub,
+        process.pid,
+        process.user,
+        process.cpu_percent,
+        process.memory_percent,
+        process.state,
+        process.tty,
+        process.started_at,
+        process.cpu_time,
+        process.command,
       ].some(value =>
         String(value ?? "")
           .toLowerCase()
           .includes(normalizedSearch)
       )
     );
-  }, [services, search]);
+  }, [processes, search]);
 
-  const total = filteredServices.length;
+  const total = filteredProcesses.length;
 
   const totalPages = Math.max(
     1,
@@ -287,17 +245,17 @@ export default function ServicesPage() {
     }
   }, [page, totalPages]);
 
-  const paginatedServices = useMemo(() => {
+  const paginatedProcesses = useMemo(() => {
     const startIndex = (page - 1) * pageSize;
 
-    return filteredServices
+    return filteredProcesses
       .slice(startIndex, startIndex + pageSize)
-      .map((service, index) => ({
-        ...service,
+      .map((process, index) => ({
+        ...process,
         serial_number: startIndex + index + 1,
       }));
   }, [
-    filteredServices,
+    filteredProcesses,
     page,
     pageSize,
   ]);
@@ -313,14 +271,10 @@ export default function ServicesPage() {
 
   // mutations======================================================================================
   const actionMutation = useMutation({
-    mutationFn: ({
-      serviceName,
-      action,
-      reason,
-    }) =>
-      service_action(
+    mutationFn: ({ pid, action, reason }) =>
+      process_action(
         id,
-        serviceName,
+        pid,
         action,
         reason
       ),
@@ -328,11 +282,11 @@ export default function ServicesPage() {
     onSuccess: async response => {
       toast.success(
         response?.message ??
-        "Service action completed successfully."
+        "Process action completed successfully."
       );
 
       await queryClient.invalidateQueries({
-        queryKey: ["inventory_services", id],
+        queryKey: ["inventory_processes", id],
       });
     },
 
@@ -355,58 +309,56 @@ export default function ServicesPage() {
     setPage(1);
   };
 
-  const handleServiceAction = async (
-    service,
+  const handleProcessAction = async (
+    process,
     action
   ) => {
     if (actionMutation.isPending) return;
 
-    const labels = {
-      start: "Start",
-      stop: "Stop",
-      restart: "Restart",
-      enable: "Enable",
-      disable: "Disable",
-    };
+    const force = action === "force_kill";
 
-    const actionLabel = labels[action];
-
-    if (!actionLabel) return;
+    const actionLabel = force
+      ? "Force Kill"
+      : "Terminate";
 
     const { confirmed, inputValue: reason } =
       await confirm({
-        title: `${actionLabel} service?`,
+        title: `${actionLabel} process?`,
         message: (
           <>
             You are about to{" "}
-            <strong>{action}</strong>{" "}
-            the service{" "}
-            <strong>{service.name}</strong>.
+            <strong>{actionLabel.toLowerCase()}</strong>{" "}
+            process PID{" "}
+            <strong>{process.pid}</strong>.
+            <br />
+            Command:{" "}
+            <span className="font-monospace">
+              {process.command}
+            </span>
           </>
         ),
         confirmLabel: actionLabel,
-        variant:
-          action === "stop" || action === "disable"
-            ? "danger"
-            : "warning",
+        variant: force ? "danger" : "warning",
         input: {
           label: "Reason",
           placeholder:
-            "Why is this action being performed?",
-          required: false,
-          type: "text",
+            "Why is this process being terminated?",
+          required: true,
+          minLength: 3,
           maxLength: 500,
+          type: "text",
+          requiredMessage: "A reason is required.",
         },
       });
 
     if (!confirmed) return;
 
     setRunningAction(
-      `${service.name}:${action}`
+      `${process.pid}:${action}`
     );
 
     actionMutation.mutate({
-      serviceName: service.name,
+      pid: process.pid,
       action,
       reason,
     });
@@ -414,8 +366,8 @@ export default function ServicesPage() {
 
   const columns = createColumns({
     hasPermission,
-    onView: service => setSelectedService(service),
-    onAction: handleServiceAction,
+    onView: process => setSelectedProcess(process),
+    onAction: handleProcessAction,
     runningAction,
   });
 
@@ -424,11 +376,11 @@ export default function ServicesPage() {
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
           <h1 className="h3 fw-bold txt-blue mb-1">
-            Services
+            Processes
           </h1>
 
           <p className="text-secondary mb-0">
-            Services running on this inventory
+            Processes running on this inventory
           </p>
         </div>
 
@@ -504,8 +456,8 @@ export default function ServicesPage() {
                   </small>
                   <span
                     className={`badge ${inventory.status
-                        ? "text-bg-success"
-                        : "text-bg-danger"
+                      ? "text-bg-success"
+                      : "text-bg-danger"
                       }`}
                   >
                     {inventory.status
@@ -525,10 +477,10 @@ export default function ServicesPage() {
       )}
 
       <DataTable
-        tableId={`inventory-${id}-services`}
+        tableId={`inventory-${id}-processes`}
         columns={columns}
-        rows={paginatedServices}
-        rowKey="unit"
+        rows={paginatedProcesses}
+        rowKey="pid"
         loading={isPending}
         refreshing={isFetching}
         error={
@@ -538,8 +490,8 @@ export default function ServicesPage() {
         }
         emptyMessage={
           search
-            ? "No services match your search."
-            : "No services found."
+            ? "No processes match your search."
+            : "No processes found."
         }
         searchValue={search}
         onSearch={handleSearch}
@@ -552,10 +504,10 @@ export default function ServicesPage() {
       />
 
       <ViewModal
-        open={Boolean(selectedService)}
+        open={Boolean(selectedProcess)}
         inventoryId={id}
-        serviceName={selectedService?.name}
-        onClose={() => setSelectedService(null)}
+        pid={selectedProcess?.pid}
+        onClose={() => setSelectedProcess(null)}
       />
     </>
   );

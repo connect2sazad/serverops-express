@@ -123,7 +123,7 @@ class ProcessService {
             const verificationCommand = [
                 'for i in 1 2 3 4 5;',
                 'do',
-                'if ! sudo -n kill -0 ${pid} 2>/dev/null;',
+                `if ! sudo -n kill -0 ${pid} 2>/dev/null;`,
                 'then echo terminated; exit 0;',
                 'fi;',
                 'sleep 1;',

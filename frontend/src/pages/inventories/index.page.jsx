@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { toast } from "react-toastify";
@@ -32,6 +32,11 @@ const createColumns = ({
   onDiscovery,
   discoveringInventoryId
 }) => [
+    {
+      key: "serial_number",
+      label: "Sl. No.",
+      hideable: false,
+    },
     {
       key: 'name',
       label: 'Name',
@@ -741,8 +746,31 @@ export default function InventoriesPage() {
   });
 
   // separate pagination and data
-  const inventories = data?.data || [];
   const pagination = data?.pagination;
+
+  const inventories = useMemo(() => {
+    const records = data?.data ?? [];
+
+    const currentPage =
+      pagination?.page ?? page;
+
+    const currentPageSize =
+      pagination?.page_size ?? pageSize;
+
+    const startIndex =
+      (currentPage - 1) * currentPageSize;
+
+    return records.map((inventory, index) => ({
+      ...inventory,
+      serial_number: startIndex + index + 1,
+    }));
+  }, [
+    data?.data,
+    pagination?.page,
+    pagination?.page_size,
+    page,
+    pageSize,
+  ]);
 
   return (
     <>

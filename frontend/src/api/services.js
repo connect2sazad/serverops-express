@@ -1,42 +1,39 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
-const ROUTE = inventoryId => `/inventories/${inventoryId}/services`;
+const inventoryRoute = inventoryId =>
+  `/inventories/${inventoryId}/services`;
 
-export async function service_list({
-    inventoryId,
-    page = 1,
-    page_size = 10,
-    search = "",
-}) {
-    const response = await apiClient.get(ROUTE(inventoryId), {
-        params: {
-            page,
-            page_size,
-            search: search || undefined,
-        }
-    });
+export async function service_list(inventoryId) {
+  const response = await apiClient.get(
+    inventoryRoute(inventoryId)
+  );
 
-    return response.data;
+  return response.data;
 }
 
-export async function service_read(inventoryId, serviceName) {
+export async function service_read(
+  inventoryId,
+  serviceName
+) {
+  const response = await apiClient.get(
+    `${inventoryRoute(inventoryId)}/${encodeURIComponent(serviceName)}`
+  );
 
-    const response = await apiClient.get(
-        `${ROUTE(inventoryId)}/${encodeURIComponent(serviceName)}/`
-    );
-
-    return response.data;
+  return response.data;
 }
 
-export async function service_action(inventoryId, serviceName, action, reason = null) {
+export async function service_action(
+  inventoryId,
+  serviceName,
+  action,
+  reason = null
+) {
+  const response = await apiClient.post(
+    `${inventoryRoute(inventoryId)}/${encodeURIComponent(serviceName)}/${action}`,
+    {
+      reason: reason?.trim() || undefined,
+    }
+  );
 
-    const payload = {
-        reason: reason?.trim() || undefined,
-    };
-
-    const response = await apiClient.post(
-        `${ROUTE(inventoryId)}/${encodeURIComponent(serviceName)}/${action}`, payload
-    );
-
-    return response.data;
+  return response.data;
 }
